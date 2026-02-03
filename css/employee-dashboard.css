@@ -60,3 +60,65 @@ a:hover {
     margin-top: 10px;
     font-weight: bold;
 }
+    /* Ensure video element is visible and properly sized */
+        #qrVideo {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            display: block !important;
+        }
+        
+        /* Scanner container */
+        .scanner-container {
+            position: relative;
+            width: 100%;
+            padding-top: 85%; /* 4:3 aspect ratio */
+            background: #000;
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+        
+        .scanner-container video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 120%;
+        }
+        
+        /* Scanner overlay */
+        .scanner-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            height: 70%;
+            border: 3px solid #22c55e;
+            border-radius: 12px;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+        }
+        
+        .scanner-overlay::before,
+        .scanner-overlay::after {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-color: #22c55e;
+            border-style: solid;
+        }
+        
+        .scanner-overlay::before {
+            top: -3px;
+            left: -3px;
+            border-width: 4px 0 0 4px;
+            border-radius: 12px 0 0 0;
+        }
+        
+        .scanner-overlay::after {
+            bottom: -3px;
+            right: -3px;
+            border-width: 0 4px 4px 0;
+            border-radius: 0 0 12px 0;
+        }
