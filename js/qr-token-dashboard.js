@@ -4,6 +4,49 @@ const SUPABASE_KEY = "sb_publishable__N_eKBbedJtTPW9AHefR5Q_wRFiUXey";
 const qrTableBody = document.querySelector("#qrTable tbody");
 let selectedTokenId = null;
 
+/* ================= CHECK AND UPDATE EXPIRED TOKENS ================= */
+async function checkAndUpdateExpiredTokens() {
+    try {
+        // Fetch all active tokens
+        const res = await fetch(
+            `${SUPABASE_URL}/qr_tokens?is_active=eq.true`,
+            {
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`
+                }
+            }
+        );
+        
+        if (!res.ok) throw new Error("Failed to fetch active tokens");
+        
+        const data = await res.json();
+        const now = new Date();
+        
+        // Check each token and update expired ones
+        for (const token of data) {
+            const expiresAt = new Date(token.expires_at);
+            
+            if (expiresAt < now) {
+                // Token is expired, update in database
+                await fetch(`${SUPABASE_URL}/qr_tokens?id=eq.${token.id}`, {
+                    method: "PATCH",
+                    headers: {
+                        "apikey": SUPABASE_KEY,
+                        "Authorization": `Bearer ${SUPABASE_KEY}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ is_active: false })
+                });
+                
+                console.log(`Token ${token.id} marked as expired`);
+            }
+        }
+    } catch (error) {
+        console.error("Error checking expired tokens:", error);
+    }
+}
+
 /* ================= TOAST NOTIFICATIONS ================= */
 function showToast(message, type = "info") {
     const toast = document.createElement("div");
@@ -118,15 +161,15 @@ async function loadQRCodes() {
             tr.className = "hover:bg-gray-50 transition-colors cursor-pointer";
             tr.onclick = () => openModal(row);
 
-            // Compute status dynamically
-            let statusText = "Expired";
-            let statusClass = "bg-red-100 text-red-700";
-            let statusIcon = "bx-x-circle";
-
-            if (row.is_active && new Date(row.expires_at) > now) {
-                statusText = "Active";
-                statusClass = "bg-green-100 text-green-700";
-                statusIcon = "bx-check-circle";
+            // Compute expired status dynamically
+            let expiredText = "No";
+            let expiredClass = "bg-green-100 text-green-700";
+            let expiredIcon = "bx-check-circle";
+            
+            if (!row.is_active || new Date(row.expires_at) < now) {
+                expiredText = "Yes";
+                expiredClass = "bg-red-100 text-red-700";
+                expiredIcon = "bx-x-circle";
             }
 
             tr.innerHTML = `
@@ -153,8 +196,8 @@ async function loadQRCodes() {
                     </div>
                 </td>
                 <td class="px-6 py-4">
-                    <span class="inline-flex items-center gap-1 px-3 py-1.5 ${statusClass} rounded-full text-sm font-medium">
-                        <i class='bx ${statusIcon}'></i>${statusText}
+                    <span class="inline-flex items-center gap-1 px-3 py-1.5 ${expiredClass} rounded-full text-sm font-medium">
+                        <i class='bx ${expiredIcon}'></i>${expiredText}
                     </span>
                 </td>
             `;
@@ -184,14 +227,14 @@ function openModal(row) {
     selectedTokenId = row.id;
 
     const now = new Date();
-    let statusText = "Expired";
-    let statusClass = "text-red-600";
-    let statusIcon = "bx-x-circle";
+    let expiredText = "No";
+    let expiredClass = "text-green-600";
+    let expiredIcon = "bx-check-circle";
 
-    if (row.is_active && new Date(row.expires_at) > now) {
-        statusText = "Active";
-        statusClass = "text-green-600";
-        statusIcon = "bx-check-circle";
+    if (!row.is_active || new Date(row.expires_at) < now) {
+        expiredText = "Yes";
+        expiredClass = "text-red-600";
+        expiredIcon = "bx-x-circle";
     }
 
     document.getElementById("modalToken").textContent = row.token;
@@ -200,8 +243,8 @@ function openModal(row) {
     document.getElementById("modalExpires").textContent = toPHTime(row.expires_at);
     
     const statusEl = document.getElementById("modalStatus");
-    statusEl.innerHTML = `<i class='bx ${statusIcon} ${statusClass} mr-1'></i>${statusText}`;
-    statusEl.className = `font-medium ${statusClass}`;
+    statusEl.innerHTML = `<i class='bx ${expiredIcon} ${expiredClass} mr-1'></i>${expiredText}`;
+    statusEl.className = `font-medium ${expiredClass}`;
 
     const modal = document.getElementById("tokenModal");
     modal.classList.remove("hidden");
@@ -249,12 +292,15 @@ async function deleteToken() {
 }
 
 /* ================= AUTO-REFRESH ================= */
-setInterval(loadQRCodes, 15000);
+setInterval(loadQRCodes, 25000);
 
 /* ================= INITIAL LOAD ================= */
 document.addEventListener("DOMContentLoaded", () => {
+    checkAndUpdateExpiredTokens(); // Check and update expired tokens first
     loadQRCodes();
     loadStats();
+    // Check for expired tokens every 30 seconds
+    setInterval(checkAndUpdateExpiredTokens, 30000);
 });
 
 /* ================= CLOSE MODAL EVENTS ================= */

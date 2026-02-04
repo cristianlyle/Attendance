@@ -67,11 +67,11 @@ async function loadStats() {
         document.getElementById("todayAttendance").textContent = attendance.length || 0;
 
         // Active QR Tokens
-        const qrRes = await fetch(`${SUPABASE_URL}/qr_tokens?is_active=eq.true&select=id`, {
+          const allRes = await fetch(`${SUPABASE_URL}/qr_tokens?select=id`, {
             headers: { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}` }
         });
-        const tokens = await qrRes.json();
-        document.getElementById("activeTokens").textContent = tokens.length || 0;
+        const allData = await allRes.json();
+        document.getElementById("totalCount").textContent = allData.length || 0;
     } catch (error) {
         console.error("Error loading stats:", error);
     }
@@ -102,7 +102,7 @@ async function generateQRCode() {
     const token = crypto.randomUUID();
 
     const createdAt = nowUTC();
-    const expiresAt = new Date(createdAt.getTime() + 10 * 1000);
+    const expiresAt = new Date(createdAt.getTime() + 13 * 1000);
 
     try {
         const res = await fetch(`${SUPABASE_URL}/qr_tokens`, {
@@ -273,6 +273,122 @@ async function loadQRCodes() {
     }
 }
 
+/* ================= LOAD QR CODES WITH SCAN STATUS ================= */
+async function loadQRCodesWithStatus() {
+    const qrTokensTableBody = document.querySelector("#qrTokensTable tbody");
+    if (!qrTokensTableBody) return;
+
+    qrTokensTableBody.innerHTML = `
+        <tr>
+            <td colspan="8" class="px-6 py-8 text-center text-gray-500">
+                <div class="flex flex-col items-center">
+                    <i class='bx bx-loader-alt bx-spin text-4xl mb-2 text-gray-300'></i>
+                    <p>Loading QR tokens...</p>
+                </div>
+            </td>
+        </tr>
+    `;
+
+    try {
+        const res = await fetch(
+            `${SUPABASE_URL}/qr_tokens?is_active=eq.true&order=created_at.desc`,
+            {
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                },
+            }
+        );
+
+        const data = await res.json();
+        qrTokensTableBody.innerHTML = "";
+
+        if (data.length === 0) {
+            qrTokensTableBody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="px-6 py-8 text-center text-gray-500">
+                        <div class="flex flex-col items-center">
+                            <i class='bx bx-qr-code text-4xl mb-2 text-gray-300'></i>
+                            <p>No active QR tokens</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        const now = new Date();
+        for (const row of data) {
+            const isExpired = new Date(row.expires_at) < now;
+            
+            // Get scan status
+            const timeInTaken = row.time_in_taken ? '<i class="bx bx-check text-green-500"></i>' : '<i class="bx bx-minus text-gray-400"></i>';
+            const lunchInTaken = row.lunch_in_taken ? '<i class="bx bx-check text-green-500"></i>' : '<i class="bx bx-minus text-gray-400"></i>';
+            const lunchOutTaken = row.lunch_out_taken ? '<i class="bx bx-check text-green-500"></i>' : '<i class="bx bx-minus text-gray-400"></i>';
+            const timeOutTaken = row.time_out_taken ? '<i class="bx bx-check text-green-500"></i>' : '<i class="bx bx-minus text-gray-400"></i>';
+
+            const tr = document.createElement("tr");
+            tr.className = "hover:bg-gray-50 transition-colors";
+            
+            tr.innerHTML = `
+                <td class="px-6 py-4">
+                    <span class="px-2 py-1 bg-gray-100 text-gray-700 rounded font-mono text-xs break-all">
+                        ${row.token.substring(0, 12)}...
+                    </span>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
+                        <i class='bx bxs-map-pin mr-1'></i>${row.location_id}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-600">
+                    ${toPHTime(row.expires_at)}
+                </td>
+                <td class="px-6 py-4 text-center">
+                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full ${row.time_in_taken ? 'bg-green-100' : 'bg-gray-100'}">
+                        ${timeInTaken}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full ${row.lunch_in_taken ? 'bg-blue-100' : 'bg-gray-100'}">
+                        ${lunchInTaken}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full ${row.lunch_out_taken ? 'bg-yellow-100' : 'bg-gray-100'}">
+                        ${lunchOutTaken}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-center">
+                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-full ${row.time_out_taken ? 'bg-orange-100' : 'bg-gray-100'}">
+                        ${timeOutTaken}
+                    </span>
+                </td>
+                <td class="px-6 py-4">
+                    <button onclick="deactivateQRCode('${row.id}')" 
+                        class="flex items-center gap-1 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg text-sm transition-colors">
+                        <i class='bx bx-block'></i>
+                        Deactivate
+                    </button>
+                </td>
+            `;
+            qrTokensTableBody.appendChild(tr);
+        }
+    } catch (error) {
+        console.error("Error loading QR tokens with status:", error);
+        qrTokensTableBody.innerHTML = `
+            <tr>
+                <td colspan="8" class="px-6 py-8 text-center text-red-500">
+                    <div class="flex flex-col items-center">
+                        <i class='bx bxs-error-circle text-4xl mb-2'></i>
+                        <p>Failed to load QR tokens</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+}
+
 /* ================= DEACTIVATE ================= */
 async function deactivateQRCode(id) {
     try {
@@ -286,6 +402,7 @@ async function deactivateQRCode(id) {
             body: JSON.stringify({ is_active: false })
         });
         loadQRCodes();
+        loadQRCodesWithStatus();
         loadStats();
         showToast("QR Code deactivated", "success");
     } catch (error) {
@@ -427,7 +544,11 @@ async function startMonitoringForUsedTokens() {
                     // New token was generated, update our reference
                     lastKnownTokenId = data[0].id;
                     loadQRCodes();
+                    loadQRCodesWithStatus();
                     loadStats();
+                } else {
+                    // Token status might have changed (scanned), refresh the status table
+                    loadQRCodesWithStatus();
                 }
             }
         } catch (error) {

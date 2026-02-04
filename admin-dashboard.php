@@ -114,8 +114,8 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
                 <div class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-500 text-sm font-medium">Active QR Tokens</p>
-                            <p class="text-3xl font-bold text-gray-800 mt-1" id="activeTokens">--</p>
+                            <p class="text-gray-500 text-sm font-medium">Tokens</p>
+                            <p class="text-3xl font-bold text-gray-800 mt-1" id="totalCount">--</p>
                         </div>
                         <div class="bg-purple-100 p-3 rounded-xl">
                             <i class='bx bx-qr text-2xl text-purple-600'></i>
@@ -198,7 +198,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
                     </div>
                 </div>
                 <p id="qrMsg" class="mt-4 font-semibold text-red-500 flex items-center gap-2">
-                  
+                   
                     <span></span>
                 </p>
             </div>

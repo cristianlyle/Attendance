@@ -12,6 +12,49 @@ const scannerContainer = document.getElementById("scannerContainer");
 let scanning = false;
 let videoStream = null;
 
+/* ================= TOAST NOTIFICATIONS ================= */
+function showToast(message, type = "info") {
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    // Get styles from CSS or use defaults
+    const colors = {
+        success: "#28a745",
+        error: "#dc3545",
+        warning: "#ffc107",
+        info: "#17a2b8"
+    };
+    toast.style.backgroundColor = colors[type] || colors.info;
+    toast.style.color = "white";
+    toast.style.padding = "12px 24px";
+    toast.style.borderRadius = "8px";
+    toast.style.marginTop = "10px";
+    toast.style.marginLeft = "auto";
+    toast.style.marginRight = "auto";
+    toast.style.maxWidth = "400px";
+    toast.style.textAlign = "center";
+    toast.style.boxShadow = "0 4px 6px rgba(0,0,0,0.1)";
+    toast.style.fontWeight = "500";
+    toast.style.fontFamily = "system-ui, sans-serif";
+    toast.style.position = "relative";
+    toast.style.zIndex = "9999";
+
+    // Show toast
+    setTimeout(() => {
+        toast.style.opacity = "1";
+        toast.style.transform = "translateY(0)";
+    }, 10);
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(-20px)";
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
 /* ================= TIME FORMAT - PHILIPPINE TIME ================= */
 function toPHTime(dateString) {
     return new Date(dateString).toLocaleString("en-PH", {
@@ -31,7 +74,6 @@ function toPHTimeOnly(dateString) {
         timeZone: "Asia/Manila",
         hour: "2-digit",
         minute: "2-digit",
-        second: "2-digit",
         hour12: true
     });
 }
@@ -52,6 +94,10 @@ async function fetchAttendance() {
                 }
             }
         );
+
+        if (!res.ok) {
+            throw new Error('Failed to fetch attendance');
+        }
 
         const data = await res.json();
 
@@ -104,8 +150,8 @@ async function fetchAttendance() {
         const todayRecord = data.find(r => r.date === today);
         if (todayRecord) {
             document.getElementById('timeIn').textContent = todayRecord.time_in ? toPHTimeOnly(todayRecord.time_in) : '--:--';
-            document.getElementById('lunchOut').textContent = todayRecord.lunch_out ? toPHTimeOnly(todayRecord.lunch_out) : '--:--';
             document.getElementById('lunchIn').textContent = todayRecord.lunch_in ? toPHTimeOnly(todayRecord.lunch_in) : '--:--';
+            document.getElementById('lunchOut').textContent = todayRecord.lunch_out ? toPHTimeOnly(todayRecord.lunch_out) : '--:--';
             document.getElementById('timeOut').textContent = todayRecord.time_out ? toPHTimeOnly(todayRecord.time_out) : '--:--';
             document.getElementById('todayLocation').textContent = todayRecord.location || 'Not marked';
         }
@@ -241,75 +287,16 @@ async function scanFrame() {
 
 /* ================= ATTENDANCE LOGIC ================= */
 
-// Function to auto-generate a new QR token for the employee
-async function autoGenerateQRToken(location) {
-    try {
-        const newToken = generateToken();
-        const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 8); // Token expires in 8 hours
-
-        const res = await fetch(`${SUPABASE_URL}/qr_tokens`, {
-            method: "POST",
-            headers: {
-                apikey: SUPABASE_KEY,
-                Authorization: `Bearer ${SUPABASE_KEY}`,
-                "Content-Type": "application/json",
-                Prefer: "return=minimal"
-            },
-            body: JSON.stringify({
-                token: newToken,
-                location_id: location,
-                is_active: true,
-                created_at: new Date().toISOString(),
-                expires_at: expiresAt.toISOString()
-            })
-        });
-
-        if (res.ok) {
-            return { token: newToken, location_id: location };
-        }
-        return null;
-    } catch (error) {
-        console.error('Error generating QR token:', error);
-        return null;
-    }
-}
-
-// Function to mark expired QR tokens as inactive
-async function markTokenAsExpired(token) {
-    try {
-        await fetch(
-            `${SUPABASE_URL}/qr_tokens?token=eq.${token}`,
-            {
-                method: "PATCH",
-                headers: {
-                    apikey: SUPABASE_KEY,
-                    Authorization: `Bearer ${SUPABASE_KEY}`,
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ is_active: false })
-            }
-        );
-    } catch (error) {
-        console.error('Error marking token as expired:', error);
-    }
-}
-
-// Generate random token
-function generateToken() {
-    return 'QR' + Date.now().toString(36) + Math.random().toString(36).substring(2, 8).toUpperCase();
-}
-
 async function markAttendance(token) {
     showToast("Processing QR code...", "info");
 
     try {
-        // Check if token is valid, active, AND not expired (using UTC for consistency)
         const now = new Date();
-        const nowUTC = new Date(now.getTime() - (now.getTimezoneOffset() * 60000));
+        const today = new Date().toISOString().split("T")[0];
         
+        // Check if token is valid
         const tokenRes = await fetch(
-            `${SUPABASE_URL}/qr_tokens?token=eq.${token}&is_active=eq.true`,
+            `${SUPABASE_URL}/qr_tokens?token=eq.${token}`,
             {
                 headers: {
                     apikey: SUPABASE_KEY,
@@ -318,59 +305,58 @@ async function markAttendance(token) {
             }
         );
 
+        if (!tokenRes.ok) {
+            throw new Error('Failed to fetch token');
+        }
+
         const tokenData = await tokenRes.json();
         
-        // If token not found or not active, it might be expired or already used
+        // If token not found
         if (tokenData.length === 0) {
-            // Check if token exists but is expired
-            const expiredCheck = await fetch(
-                `${SUPABASE_URL}/qr_tokens?token=eq.${token}`,
-                {
-                    headers: {
-                        apikey: SUPABASE_KEY,
-                        Authorization: `Bearer ${SUPABASE_KEY}`
-                    }
-                }
-            );
-            const expiredData = await expiredCheck.json();
-            
-            if (expiredData.length > 0) {
-                const tokenExpiry = new Date(expiredData[0].expires_at);
-                if (tokenExpiry <= nowUTC) {
-                    // Token is expired
-                    await markTokenAsExpired(token);
-                    showToast("QR code expired. Generating new QR...", "info");
-                  if (newQR) {
-                        showToast("Failed to generate new QR code", "error");
-                    }
-                } else {
-                    showToast("QR code already used.", "info");
-                }
-            } else {
-                showToast("Invalid QR code.", "error");
-            }
+            showToast("Invalid QR code.", "error");
+            // Restart scanner after error
+            setTimeout(() => startScanner(), 2000);
             return;
         }
         
-        // Verify token is not expired
-        const tokenExpiry = new Date(tokenData[0].expires_at);
-        if (tokenExpiry <= nowUTC) {
-            // Token expired - mark as inactive and generate new one
-            await markTokenAsExpired(token);
-            showToast("QR code expired. Generating new QR...", "info");
-            const newQR = await autoGenerateQRToken(tokenData[0].location_id);
-            if (newQR) {
-                showToast("New QR generated! Please scan again.", "success");
-            } else {
-                showToast("Failed to generate new QR code", "error");
-            }
+        const tokenRecord = tokenData[0];
+        
+        // Check if token is expired
+        const tokenExpiry = new Date(tokenRecord.expires_at).getTime();
+        const currentTime = now.getTime();
+        
+        if (tokenExpiry < currentTime) {
+            showToast("QR code expired.", "error");
+            // Restart scanner after error
+            setTimeout(() => startScanner(), 2000);
             return;
         }
+        
+        // Check if token has already been used today
+        const checkUsedRes = await fetch(
+            `${SUPABASE_URL}/attendance?user_id=eq.${EMPLOYEE_ID}&token=eq.${tokenRecord.id}&date=eq.${today}`,
+            {
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`
+                }
+            }
+        );
 
-        const today = new Date().toISOString().split("T")[0];
+        if (checkUsedRes.ok) {
+            const usedData = await checkUsedRes.json();
+            if (usedData.length > 0) {
+                showToast("Invalid! QR Code Already Scanned", "error");
+                // Restart scanner after error
+                setTimeout(() => startScanner(), 2000);
+                return;
+            }
+        }
 
-        // Check today's attendance
-        const attendanceRes = await fetch(
+        const location = tokenRecord.location_id;
+
+        // Count how many attendance records user has today
+        const countRes = await fetch(
             `${SUPABASE_URL}/attendance?user_id=eq.${EMPLOYEE_ID}&date=eq.${today}`,
             {
                 headers: {
@@ -380,16 +366,70 @@ async function markAttendance(token) {
             }
         );
 
-        const attendanceData = await attendanceRes.json();
+        if (!countRes.ok) {
+            throw new Error('Failed to count attendance');
+        }
 
-        // Token is valid and not expired - proceed with attendance
-        const location = tokenData[0].location_id;
-        const record = attendanceData.length > 0 ? attendanceData[0] : null;
+        const attendanceData = await countRes.json();
+        let existingRecordId = null;
+        let existingRecord = null;
 
-        // Attendance flow: Time In -> Lunch Out -> Lunch In -> Time Out
-        if (!record) {
-            // First scan: Time In (Morning)
-            await fetch(`${SUPABASE_URL}/attendance`, {
+        // If record already exists, get its ID and data
+        if (attendanceData.length > 0) {
+            existingRecordId = attendanceData[0].id;
+            existingRecord = attendanceData[0];
+        }
+
+        // Determine which scan this is based on existing fields
+        // Check which field is still null and needs to be filled
+        let insertData = {
+            user_id: EMPLOYEE_ID,
+            date: today,
+            token: tokenRecord.id,
+            location: location
+        };
+
+        if (!existingRecord) {
+            // No record exists yet - 1st scan: Time In
+            insertData.time_in = new Date().toISOString();
+            showToast("✓ Time In recorded!", "success");
+        } else if (existingRecord.time_in && !existingRecord.lunch_in) {
+            // 2nd scan: Lunch In
+            insertData.lunch_in = new Date().toISOString();
+            showToast("✓ Lunch In recorded! Enjoy your break.", "success");
+        } else if (existingRecord.lunch_in && !existingRecord.lunch_out) {
+            // 3rd scan: Lunch Out
+            insertData.lunch_out = new Date().toISOString();
+            showToast("✓ Back from lunch! Continue working.", "success");
+        } else if (existingRecord.lunch_out && !existingRecord.time_out) {
+            // 4th scan: Time Out
+            insertData.time_out = new Date().toISOString();
+            showToast("✓ Time Out recorded! Have a great day!", "success");
+        } else {
+            showToast("All attendance scans completed for today!", "info");
+            // Restart scanner
+            setTimeout(() => startScanner(), 2000);
+            fetchAttendance();
+            return;
+        }
+
+        // Insert or Update attendance record
+        let insertRes;
+        if (existingRecordId) {
+            // Update existing record using PATCH
+            insertRes = await fetch(`${SUPABASE_URL}/attendance?id=eq.${existingRecordId}`, {
+                method: "PATCH",
+                headers: {
+                    apikey: SUPABASE_KEY,
+                    Authorization: `Bearer ${SUPABASE_KEY}`,
+                    "Content-Type": "application/json",
+                    Prefer: "return=minimal"
+                },
+                body: JSON.stringify(insertData)
+            });
+        } else {
+            // Insert new record
+            insertRes = await fetch(`${SUPABASE_URL}/attendance`, {
                 method: "POST",
                 headers: {
                     apikey: SUPABASE_KEY,
@@ -397,166 +437,26 @@ async function markAttendance(token) {
                     "Content-Type": "application/json",
                     Prefer: "return=minimal"
                 },
-                body: JSON.stringify({
-                    user_id: EMPLOYEE_ID,
-                    date: today,
-                    time_in: new Date().toISOString(),
-                    location: location,
-                    token: token
-                })
+                body: JSON.stringify(insertData)
             });
-
-            showToast("✓ Morning Time In recorded!", "success");
-            updateStatusAfterCheckIn(today, location);
-
-        } else if (!record.time_in) {
-            // Should not happen, but handle edge case
-            await fetch(
-                `${SUPABASE_URL}/attendance?id=eq.${record.id}`,
-                {
-                    method: "PATCH",
-                    headers: {
-                        apikey: SUPABASE_KEY,
-                        Authorization: `Bearer ${SUPABASE_KEY}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        time_in: new Date().toISOString()
-                    })
-                }
-            );
-            showToast("✓ Time In recorded!", "success");
-            updateStatusAfterCheckIn(today, location);
-
-        } else if (!record.lunch_in) {
-            // Second scan: Lunch Out
-            await fetch(
-                `${SUPABASE_URL}/attendance?id=eq.${record.id}`,
-                {
-                    method: "PATCH",
-                    headers: {
-                        apikey: SUPABASE_KEY,
-                        Authorization: `Bearer ${SUPABASE_KEY}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        lunch_in: new Date().toISOString()
-                    })
-                }
-            );
-            showToast("✓ Lunch In recorded! Enjoy your break.", "success");
-            updateStatusAfterLunchIn();
-
-        } else if (!record.lunch_out) {
-            // Third scan: Lunch Out (back from break)
-            await fetch(
-                `${SUPABASE_URL}/attendance?id=eq.${record.id}`,
-                {
-                    method: "PATCH",
-                    headers: {
-                        apikey: SUPABASE_KEY,
-                        Authorization: `Bearer ${SUPABASE_KEY}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        lunch_out: new Date().toISOString()
-                    })
-                }
-            );
-            showToast("✓ Back from lunch! Continue working.", "success");
-            updateStatusAfterLunchOut();
-
-        } else if (!record.time_out) {
-            // Fourth scan: Time Out (end of work day)
-            await fetch(
-                `${SUPABASE_URL}/attendance?id=eq.${record.id}`,
-                {
-                    method: "PATCH",
-                    headers: {
-                        apikey: SUPABASE_KEY,
-                        Authorization: `Bearer ${SUPABASE_KEY}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        time_out: new Date().toISOString()
-                    })
-                }
-            );
-            showToast("✓ Time Out recorded! Have a great day!", "success");
-            updateStatusAfterCheckOut();
-        } else {
-            // Already completed all attendance for the day
-            showToast("Already completed attendance for today", "info");
         }
 
-        // Deactivate QR token after use
-        await markTokenAsExpired(token);
+        if (!insertRes.ok) {
+            const errorText = await insertRes.text();
+            console.error('Insert error:', errorText);
+            showToast("Error recording attendance. Check console.", "error");
+        }
 
+        // Refresh attendance data
         fetchAttendance();
+
+        // Restart scanner after 2 seconds
+        setTimeout(() => startScanner(), 2000);
 
     } catch (error) {
         console.error('Error marking attendance:', error);
-        showToast("An error occurred. Please try again.", "error");
+        showToast("An error occurred: " + error.message, "error");
+        // Restart scanner after error
+        setTimeout(() => startScanner(), 2000);
     }
-}
-
-function updateStatusAfterCheckIn(today, location) {
-    document.getElementById('timeIn').textContent = toPHTimeOnly(new Date().toISOString());
-    document.getElementById('todayLocation').textContent = location;
-}
-
-function updateStatusAfterCheckOut() {
-    document.getElementById('timeOut').textContent = toPHTimeOnly(new Date().toISOString());
-}
-
-function updateStatusAfterLunchOut() {
-    document.getElementById('lunchOut').textContent = toPHTimeOnly(new Date().toISOString());
-}
-
-function updateStatusAfterLunchIn() {
-    document.getElementById('lunchIn').textContent = toPHTimeOnly(new Date().toISOString());
-}
-
-/* ================= CSV EXPORT ================= */
-
-function exportCSV() {
-    const rows = Array.from(document.querySelectorAll("#attendanceTable tr"));
-    let csv = rows.map(r =>
-        Array.from(r.querySelectorAll("th,td"))
-            .map(c => `"${c.textContent.replace(/"/g, '""').replace(/\n/g, ' ')}"`)
-            .join(",")
-    ).join("\n");
-
-    const link = document.createElement("a");
-    link.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
-    link.download = "my_attendance.csv";
-    link.click();
-    
-    showToast("CSV exported!", "success");
-}
-
-/* ================= TOAST ================= */
-
-function showToast(message, type = "info") {
-    const toast = document.getElementById("toast");
-    const iconMap = {
-        success: { icon: 'bxs-check-circle', bg: 'bg-green-500', text: 'text-white' },
-        error: { icon: 'bxs-x-circle', bg: 'bg-red-500', text: 'text-white' },
-        info: { icon: 'bxs-info-circle', bg: 'bg-blue-500', text: 'text-white' }
-    };
-
-    const config = iconMap[type] || iconMap.info;
-
-    toast.className = `fixed bottom-4 right-4 px-4 py-3 rounded-xl shadow-lg transform transition-all duration-300 z-50 flex items-center gap-2 ${config.bg} ${config.text}`;
-    toast.innerHTML = `<i class='bx ${config.icon} text-xl'></i><span>${message}</span>`;
-
-    // Show toast
-    setTimeout(() => {
-        toast.classList.remove('translate-y-20', 'opacity-0');
-    }, 10);
-
-    // Hide toast after 3 seconds
-    setTimeout(() => {
-        toast.classList.add('translate-y-20', 'opacity-0');
-    }, 3000);
 }

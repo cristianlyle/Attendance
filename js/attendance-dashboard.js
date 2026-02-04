@@ -168,6 +168,28 @@ async function fetchAttendance() {
                     `}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
+                    ${record.lunch_in ? `
+                        <span class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                            <i class='bx bx-restaurant'></i>${toPHTimeOnly(record.lunch_in)}
+                        </span>
+                    ` : `
+                        <span class="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-500 rounded-full text-sm">
+                            <i class='bx bx-minus'></i>--
+                        </span>
+                    `}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    ${record.lunch_out ? `
+                        <span class="inline-flex items-center gap-1 px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
+                            <i class='bx bx-coffee'></i>${toPHTimeOnly(record.lunch_out)}
+                        </span>
+                    ` : `
+                        <span class="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-500 rounded-full text-sm">
+                            <i class='bx bx-minus'></i>--
+                        </span>
+                    `}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
                     ${record.time_out ? `
                         <span class="inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
                             <i class='bx bxs-log-out-circle'></i>${toPHTimeOnly(record.time_out)}

@@ -13,6 +13,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
     <title>Attendance Dashboard - Attendance System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
 
@@ -136,7 +137,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
                         Export CSV
                     </button>
                 </div>
-                <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
+                <div class="overflow-x-auto custom-scrollbar max-h-[600px] overflow-y-auto">
                     <table id="attendanceTable" class="w-full">
                         <thead class="bg-gray-50 sticky top-0 z-10">
                             <tr>
@@ -148,6 +149,12 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                     <i class='bx bxs-log-in-circle mr-1 text-green-500'></i>Time In
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    <i class='bx bx-restaurant mr-1 text-blue-500'></i>Break In
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    <i class='bx bx-coffee mr-1 text-yellow-500'></i>Break Out
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                     <i class='bx bxs-log-out-circle mr-1 text-orange-500'></i>Time Out
@@ -183,3 +190,4 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
     </script>
 </body>
 </html>
+

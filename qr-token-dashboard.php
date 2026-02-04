@@ -102,17 +102,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
                         </div>
                     </div>
                 </div>
-                <div class="bg-white rounded-2xl shadow-lg p-6">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-500 text-sm font-medium">Total Tokens</p>
-                            <p class="text-3xl font-bold text-gray-800 mt-1" id="totalCount">--</p>
-                        </div>
-                        <div class="bg-blue-100 p-3 rounded-xl">
-                            <i class='bx bx-qr text-2xl text-blue-600'></i>
-                        </div>
-                    </div>
-                </div>
+               
                 <div class="bg-white rounded-2xl shadow-lg p-6">
                     <div class="flex items-center justify-between">
                         <div>
@@ -121,6 +111,17 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
                         </div>
                         <div class="bg-gray-100 p-3 rounded-xl">
                             <i class='bx bx-x-circle text-2xl text-gray-500'></i>
+                        </div>
+                    </div>
+                </div>
+                 <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm font-medium">Total Tokens</p>
+                            <p class="text-3xl font-bold text-gray-800 mt-1" id="totalCount">--</p>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-xl">
+                            <i class='bx bx-qr text-2xl text-blue-600'></i>
                         </div>
                     </div>
                 </div>
@@ -136,7 +137,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
                         <h2 class="text-xl font-bold text-gray-800">All QR Tokens</h2>
                     </div>
                 </div>
-                <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
+                <div class="overflow-x-auto max-h-[700px] overflow-y-auto">
                     <table id="qrTable" class="w-full">
                         <thead class="bg-gray-50 sticky top-0 z-10">
                             <tr>
@@ -153,7 +154,7 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
                                     <i class='bx bx-timer mr-1'></i>Expires At
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                    <i class='bx bxs-check-circle mr-1'></i>Status
+                                    <i class='bx bx-calendar-x mr-1'></i>Expired
                                 </th>
                             
                             </tr>
