@@ -4,6 +4,8 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
     header("Location: login.php");
     exit();
 }
+
+require 'db.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -72,9 +74,11 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
                     <h1 class="text-3xl font-bold text-gray-800">
                         <i class='bx bx-qr mr-3 text-green-600'></i>QR Tokens
                     </h1>
-                    <p class="text-gray-600 mt-1 flex items-center gap-2">
-                        <i class='bx bxs-barcode text-gray-400'></i>
-                        View all generated QR codes for attendance
+                    <p class="text-gray-600 mt-1 flex items-center gap-3">
+                        <?php
+                        $profileImage = get_profile_image($_SESSION['user']['profile_image'] ?? null);
+                        ?>
+                        <span>View all generated QR codes for attendance</span>
                     </p>
                 </div>
                 <div class="flex items-center gap-3">

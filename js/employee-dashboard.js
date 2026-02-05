@@ -30,29 +30,33 @@ function showToast(message, type = "info") {
     toast.style.color = "white";
     toast.style.padding = "12px 24px";
     toast.style.borderRadius = "8px";
-    toast.style.marginTop = "10px";
-    toast.style.marginLeft = "auto";
-    toast.style.marginRight = "auto";
-    toast.style.maxWidth = "400px";
-    toast.style.textAlign = "center";
-    toast.style.boxShadow = "0 4px 6px rgba(0,0,0,0.1)";
+    toast.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
     toast.style.fontWeight = "500";
     toast.style.fontFamily = "system-ui, sans-serif";
-    toast.style.position = "relative";
     toast.style.zIndex = "9999";
-
-    // Show toast
+    
+    // Position at top-right corner
+    toast.style.position = "fixed";
+    toast.style.top = "80px";
+    toast.style.right = "20px";
+    toast.style.maxWidth = "350px";
+    
+    // Show toast with slide-in animation
+    toast.style.opacity = "0";
+    toast.style.transform = "translateX(100px)";
+    toast.style.transition = "all 0.3s ease-out";
+    
     setTimeout(() => {
         toast.style.opacity = "1";
-        toast.style.transform = "translateY(0)";
+        toast.style.transform = "translateX(0)";
     }, 10);
 
     // Remove after 3 seconds
     setTimeout(() => {
         toast.style.opacity = "0";
-        toast.style.transform = "translateY(-20px)";
+        toast.style.transform = "translateX(100px)";
         setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    }, 1500);
 }
 
 /* ================= TIME FORMAT - PHILIPPINE TIME ================= */
@@ -104,7 +108,7 @@ async function fetchAttendance() {
         if (data.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="px-4 py-6 text-center text-gray-500">
+                    <td colspan="7" class="px-4 py-6 text-center text-gray-500">
                         <div class="flex flex-col items-center">
                             <i class='bx bx-calendar-x text-3xl mb-1 text-gray-300'></i>
                             <p class="text-sm">No attendance records</p>
@@ -112,12 +116,26 @@ async function fetchAttendance() {
                     </td>
                 </tr>
             `;
+            // Reset My Attendance section
+            resetMyAttendanceSection();
             return;
         }
 
+        // Populate History Table
         data.forEach(record => {
             const tr = document.createElement("tr");
             tr.className = "hover:bg-gray-50";
+            
+            // Calculate total hours
+            let hoursWorked = '--';
+            if (record.time_in && record.time_out) {
+                const timeIn = new Date(record.time_in);
+                const timeOut = new Date(record.time_out);
+                const diffMs = timeOut - timeIn;
+                const hours = (diffMs / (1000 * 60 * 60)).toFixed(2);
+                hoursWorked = `${hours} hrs`;
+            }
+            
             tr.innerHTML = `
                 <td class="px-4 py-3 whitespace-nowrap text-gray-700">${record.date}</td>
                 <td class="px-4 py-3 whitespace-nowrap">
@@ -141,6 +159,9 @@ async function fetchAttendance() {
                         '--:--'}
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap text-gray-600">${record.location || '--'}</td>
+                <td class="px-4 py-3 whitespace-nowrap">
+                    <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">${hoursWorked}</span>
+                </td>
             `;
             tbody.appendChild(tr);
         });
@@ -148,17 +169,79 @@ async function fetchAttendance() {
         // Update today's status
         const today = new Date().toISOString().split('T')[0];
         const todayRecord = data.find(r => r.date === today);
-        if (todayRecord) {
-            document.getElementById('timeIn').textContent = todayRecord.time_in ? toPHTimeOnly(todayRecord.time_in) : '--:--';
-            document.getElementById('lunchIn').textContent = todayRecord.lunch_in ? toPHTimeOnly(todayRecord.lunch_in) : '--:--';
-            document.getElementById('lunchOut').textContent = todayRecord.lunch_out ? toPHTimeOnly(todayRecord.lunch_out) : '--:--';
-            document.getElementById('timeOut').textContent = todayRecord.time_out ? toPHTimeOnly(todayRecord.time_out) : '--:--';
-            document.getElementById('todayLocation').textContent = todayRecord.location || 'Not marked';
-        }
+        
+        // Update My Attendance section
+        updateMyAttendanceSection(todayRecord);
     } catch (error) {
         console.error('Error fetching attendance:', error);
         showToast('Error loading attendance', 'error');
     }
+}
+
+/* ================= UPDATE MY ATTENDANCE SECTION ================= */
+
+function updateMyAttendanceSection(record) {
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (!record || record.date !== today) {
+        resetMyAttendanceSection();
+        return;
+    }
+    
+    // Update cards
+    document.getElementById('ma-timeIn').textContent = record.time_in ? toPHTimeOnly(record.time_in) : '--:--';
+    document.getElementById('ma-lunchIn').textContent = record.lunch_in ? toPHTimeOnly(record.lunch_in) : '--:--';
+    document.getElementById('ma-lunchOut').textContent = record.lunch_out ? toPHTimeOnly(record.lunch_out) : '--:--';
+    document.getElementById('ma-timeOut').textContent = record.time_out ? toPHTimeOnly(record.time_out) : '--:--';
+    
+    // Update details
+    document.getElementById('ma-date').textContent = record.date || '--';
+    document.getElementById('ma-location').textContent = record.location || 'Not marked';
+    
+    // Determine status
+    let status = 'Not Started';
+    let statusClass = 'bg-gray-100 text-gray-700';
+    
+    if (record.time_in && record.time_out) {
+        status = 'Completed';
+        statusClass = 'bg-green-100 text-green-700';
+    } else if (record.time_in && record.lunch_in && !record.lunch_out) {
+        status = 'On Break';
+        statusClass = 'bg-yellow-100 text-yellow-700';
+    } else if (record.lunch_out && !record.time_out) {
+        status = 'Working';
+        statusClass = 'bg-blue-100 text-blue-700';
+    } else if (record.time_in && !record.lunch_in) {
+        status = 'Time In';
+        statusClass = 'bg-green-100 text-green-700';
+    }
+    
+    const statusEl = document.getElementById('ma-status');
+    statusEl.textContent = status;
+    statusEl.className = `px-3 py-1 rounded-full text-sm font-medium ${statusClass}`;
+    
+    // Calculate total hours if time_out exists
+    if (record.time_in && record.time_out) {
+        const timeIn = new Date(record.time_in);
+        const timeOut = new Date(record.time_out);
+        const diffMs = timeOut - timeIn;
+        const diffHours = (diffMs / (1000 * 60 * 60)).toFixed(2);
+        document.getElementById('ma-totalHours').textContent = `${diffHours} hrs`;
+    } else {
+        document.getElementById('ma-totalHours').textContent = '--';
+    }
+}
+
+function resetMyAttendanceSection() {
+    document.getElementById('ma-timeIn').textContent = '--:--';
+    document.getElementById('ma-lunchIn').textContent = '--:--';
+    document.getElementById('ma-lunchOut').textContent = '--:--';
+    document.getElementById('ma-timeOut').textContent = '--:--';
+    document.getElementById('ma-date').textContent = '--';
+    document.getElementById('ma-location').textContent = 'Not marked';
+    document.getElementById('ma-status').textContent = 'Not Started';
+    document.getElementById('ma-status').className = 'px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700';
+    document.getElementById('ma-totalHours').textContent = '--';
 }
 
 fetchAttendance();
@@ -346,7 +429,7 @@ async function markAttendance(token) {
         if (checkUsedRes.ok) {
             const usedData = await checkUsedRes.json();
             if (usedData.length > 0) {
-                showToast("Invalid! QR Code Already Scanned", "error");
+                showToast("Invalid! QR code is already used", "error");
                 // Restart scanner after error
                 setTimeout(() => startScanner(), 2000);
                 return;

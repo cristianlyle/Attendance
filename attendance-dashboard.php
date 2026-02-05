@@ -4,6 +4,8 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
     header("Location: login.php");
     exit();
 }
+
+require 'db.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -73,9 +75,12 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
                     <h1 class="text-3xl font-bold text-gray-800">
                         <i class='bx bx-calendar-check mr-3 text-green-600'></i>Employee Attendance
                     </h1>
-                    <p class="text-gray-600 mt-1 flex items-center gap-2">
-                        <i class='bx bxs-data text-gray-400'></i>
-                        View all employee attendance records
+                    <p class="text-gray-600 mt-1 flex items-center gap-3">
+                        <?php
+                        $profileImage = get_profile_image($_SESSION['user']['profile_image'] ?? null);
+                        ?>
+                        
+                        <span>View all employee attendance records</span>
                     </p>
                 </div>
                 <div class="flex items-center gap-3">
@@ -158,6 +163,9 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                     <i class='bx bxs-log-out-circle mr-1 text-orange-500'></i>Time Out
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    <i class='bx bxs-time-five mr-1 text-indigo-500'></i>Total Hours
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                     <i class='bx bxs-map-pin mr-1 text-purple-500'></i>Location

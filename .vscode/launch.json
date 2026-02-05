@@ -8,7 +8,7 @@
             "type": "chrome",
             "request": "launch",
             "name": "Launch Chrome against localhost",
-            "url": "http://localhost/newproject/",
+            "url": "http://localhost/newproject/login.php",
             "webRoot": "${workspaceFolder}"
         }
     ]

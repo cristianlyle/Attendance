@@ -4,6 +4,8 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
     header("Location: login.php");
     exit();
 }
+
+require 'db.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -73,9 +75,12 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
                     <h1 class="text-3xl font-bold text-gray-800">
                         <i class='bx bxs-dashboard mr-3 text-green-600'></i>Admin Dashboard
                     </h1>
-                    <p class="text-gray-600 mt-1 flex items-center gap-2">
-                        <i class='bx bxs-user-circle text-green-500'></i>
-                        Welcome, <?= htmlspecialchars($_SESSION['user']['name']) ?>
+                    <p class="text-gray-600 mt-1 flex items-center gap-3">
+                        <?php
+                        $profileImage = get_profile_image($_SESSION['user']['profile_image'] ?? null);
+                        ?>
+                        <img src="<?= $profileImage ?>" alt="Profile" class="w-8 h-8 rounded-full object-cover border-2 border-green-500">
+                        <span>Welcome, <?= htmlspecialchars($_SESSION['user']['name']) ?></span>
                         <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Admin</span>
                     </p>
                 </div>

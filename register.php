@@ -22,13 +22,24 @@ if (isset($_POST['register'])) {
         if (!empty($existing)) {
             $error = "Email already exists.";
         } else { 
-            supabase_post($table, [
+            $data = [
                 "name" => $name,
                 "email" => $email,
                 "role" => $role,
                 "password_hash" => password_hash($password, PASSWORD_DEFAULT),
                 "status" => "active"
-            ]);
+            ];
+            
+            // Handle profile image upload to Supabase Storage
+            if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === UPLOAD_ERR_OK) {
+                $uploadResult = supabase_upload_image($_FILES['profile_image']);
+                
+                if (isset($uploadResult['path'])) {
+                    $data['profile_image'] = $uploadResult['path'];
+                }
+            }
+            
+            supabase_post($table, $data);
 
             $success = "Account created successfully! Please login.";
         }
@@ -124,6 +135,20 @@ if (isset($_POST['register'])) {
                     </div>
                 </div>
 
+                <!-- Profile Image Field -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <i class='bx bxs-image mr-1'></i>Profile Picture
+                    </label>
+                    <div class="flex items-center gap-3">
+                        <div class="w-16 h-16 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center overflow-hidden" id="imagePreview">
+                            <i class='bx bxs-camera text-xl text-gray-400'></i>
+                        </div>
+                        <input type="file" name="profile_image" accept="image/*" onchange="previewImage(event)" class="flex-1 text-sm">
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Optional: Upload a profile picture</p>
+                </div>
+
                 <!-- Password Field -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -179,6 +204,19 @@ if (isset($_POST['register'])) {
     </div>
 
     <script src="js/password-match.js"></script>
+    <script>
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('imagePreview');
+                preview.innerHTML = '<img src="' + e.target.result + '" class="w-full h-full object-cover">';
+            };
+            reader.readAsDataURL(file);
+        }
+    </script>
        
 </body>
 </html>
