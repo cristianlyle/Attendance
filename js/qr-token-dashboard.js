@@ -88,8 +88,8 @@ function getActionBadge(action) {
     const actionStyles = {
         'time_in': { bg: 'bg-green-100', text: 'text-green-700', icon: 'bx-log-in', label: 'Time In' },
         'time_out': { bg: 'bg-red-100', text: 'text-red-700', icon: 'bx-log-out', label: 'Time Out' },
-        'lunch_in': { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: 'bxs-bowl-rice', label: 'Lunch In' },
-        'lunch_out': { bg: 'bg-orange-100', text: 'text-orange-700', icon: 'bx bx-food', label: 'Lunch Out' }
+        'lunch_in': { bg: 'bg-blue-100', text: 'text-blue-700', icon: 'bxs-bowl-rice', label: 'Lunch In' },
+        'lunch_out': { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: 'bx bx-food', label: 'Lunch Out' }
     };
     
     const style = actionStyles[action] || { bg: 'bg-gray-100', text: 'text-gray-700', icon: 'bx-question', label: action };
@@ -155,7 +155,6 @@ async function loadQRCodes() {
         if (!tokensRes.ok) throw new Error("Failed to fetch QR tokens");
 
         const tokensData = await tokensRes.json();
-        console.log('QR Tokens fetched:', tokensData.length, tokensData);
         
         // Fetch all token scans
         // Fetch token scans and users via PHP endpoint
@@ -167,9 +166,6 @@ async function loadQRCodes() {
                     scansData = data.scans || [];
                     usersMap = data.users_map || {};
                     tokenScansMap = data.token_scans_map || {}; // Use global variable
-                    console.log('Token scans fetched:', scansData.length, scansData);
-                    console.log('Users map:', usersMap);
-                    console.log('Token scans map:', tokenScansMap);
                 }
             } else {
                 console.log('Token scans fetch failed:', scansRes.status, scansRes.statusText);
@@ -206,18 +202,18 @@ async function loadQRCodes() {
             const latestScan = tokenScansMap[row.id];
             
             // Compute expired status dynamically
-            let expiredText = "No";
+            let expiredText = "Not Yet";
             let expiredClass = "bg-green-100 text-green-700";
             let expiredIcon = "bx-check-circle";
             
             if (!row.is_active || new Date(row.expires_at) < now) {
-                expiredText = "Yes";
+                expiredText = "Expired";
                 expiredClass = "bg-red-100 text-red-700";
                 expiredIcon = "bx-x-circle";
             }
 
             // User and status display
-            let userDisplay = '<span class="text-gray-400"><i class="bx bx-minus"></i></span>';
+            let userDisplay = '<span class="text-gray-400"><i>-----------------------------</i></span>';
             let statusDisplay = '<span class="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-500 rounded-full text-sm font-medium">Not Scanned</span>';
             
             if (latestScan && latestScan.action) {

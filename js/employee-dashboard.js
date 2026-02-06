@@ -542,7 +542,6 @@ async function markAttendance(token) {
                 action = 'time_out';
             }
             
-            console.log('Inserting token_scan:', { user_id: EMPLOYEE_ID, token_id: tokenRecord.id, action: action });
             
             // Use PHP endpoint instead of direct Supabase call (to bypass RLS)
             const scanRes = await fetch('token-scan-handler.php', {
