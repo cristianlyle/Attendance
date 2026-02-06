@@ -149,18 +149,17 @@ require 'db.php';
                                     <i class='bx bxs-key mr-1'></i>Token
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    <i class='bx bxs-user mr-1'></i>User
+                                </th>
+                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                     <i class='bx bxs-map-pin mr-1'></i>Location
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                    <i class='bx bx-time-five mr-1'></i>Created At
-                                </th>
-                                <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                    <i class='bx bx-timer mr-1'></i>Expires At
+                                    <i class='bx bx-time-five mr-1'></i>Status
                                 </th>
                                 <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                                     <i class='bx bx-calendar-x mr-1'></i>Expired
                                 </th>
-                            
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100">

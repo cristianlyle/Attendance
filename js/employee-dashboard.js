@@ -530,6 +530,41 @@ async function markAttendance(token) {
             showToast("Error recording attendance. Check console.", "error");
         }
 
+        // Also insert into token_scans table for tracking
+        try {
+            // Determine the action type
+            let action = 'time_in';
+            if (existingRecord && existingRecord.time_in && !existingRecord.lunch_in) {
+                action = 'lunch_in';
+            } else if (existingRecord && existingRecord.lunch_in && !existingRecord.lunch_out) {
+                action = 'lunch_out';
+            } else if (existingRecord && existingRecord.lunch_out && !existingRecord.time_out) {
+                action = 'time_out';
+            }
+            
+            console.log('Inserting token_scan:', { user_id: EMPLOYEE_ID, token_id: tokenRecord.id, action: action });
+            
+            // Use PHP endpoint instead of direct Supabase call (to bypass RLS)
+            const scanRes = await fetch('token-scan-handler.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    token_id: tokenRecord.id,
+                    action: action
+                })
+            });
+            
+            console.log('Token scan response:', scanRes.status, scanRes.statusText);
+            if (!scanRes.ok) {
+                const errorText = await scanRes.text();
+                console.error('Token scan error:', errorText);
+            }
+        } catch (scanError) {
+            console.error('Error recording token scan:', scanError);
+        }
+
         // Refresh attendance data
         fetchAttendance();
 

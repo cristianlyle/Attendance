@@ -3,6 +3,7 @@ const SUPABASE_KEY = "sb_publishable__N_eKBbedJtTPW9AHefR5Q_wRFiUXey";
 
 const qrTableBody = document.querySelector("#qrTable tbody");
 let selectedTokenId = null;
+let tokenScansMap = {}; // Global storage for token scans
 
 /* ================= CHECK AND UPDATE EXPIRED TOKENS ================= */
 async function checkAndUpdateExpiredTokens() {
@@ -82,6 +83,22 @@ function toPHTime(dateString) {
     });
 }
 
+/* ================= GET ACTION BADGE ================= */
+function getActionBadge(action) {
+    const actionStyles = {
+        'time_in': { bg: 'bg-green-100', text: 'text-green-700', icon: 'bx-log-in', label: 'Time In' },
+        'time_out': { bg: 'bg-red-100', text: 'text-red-700', icon: 'bx-log-out', label: 'Time Out' },
+        'lunch_in': { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: 'bxs-bowl-rice', label: 'Lunch In' },
+        'lunch_out': { bg: 'bg-orange-100', text: 'text-orange-700', icon: 'bx bx-food', label: 'Lunch Out' }
+    };
+    
+    const style = actionStyles[action] || { bg: 'bg-gray-100', text: 'text-gray-700', icon: 'bx-question', label: action };
+    
+    return `<span class="inline-flex items-center gap-1 px-3 py-1.5 ${style.bg} ${style.text} rounded-full text-sm font-medium">
+        <i class='bx ${style.icon}'></i>${style.label}
+    </span>`;
+}
+
 /* ================= LOAD STATS ================= */
 async function loadStats() {
     try {
@@ -108,7 +125,7 @@ async function loadStats() {
     }
 }
 
-/* ================= LOAD QR TOKENS ================= */
+/* ================= LOAD QR TOKENS WITH SCAN DATA ================= */
 async function loadQRCodes() {
     if (!qrTableBody) return;
 
@@ -124,8 +141,9 @@ async function loadQRCodes() {
     `;
 
     try {
-        const res = await fetch(
-            `${SUPABASE_URL}/qr_tokens?order=created_at.desc`,
+        // Fetch all QR tokens
+        const tokensRes = await fetch(
+            `${SUPABASE_URL}/qr_tokens?order=created_at.desc&select=*`,
             {
                 headers: {
                     apikey: SUPABASE_KEY,
@@ -134,13 +152,36 @@ async function loadQRCodes() {
             }
         );
 
-        if (!res.ok) throw new Error("Failed to fetch QR tokens");
+        if (!tokensRes.ok) throw new Error("Failed to fetch QR tokens");
 
-        const data = await res.json();
+        const tokensData = await tokensRes.json();
+        console.log('QR Tokens fetched:', tokensData.length, tokensData);
+        
+        // Fetch all token scans
+        // Fetch token scans and users via PHP endpoint
+        try {
+            const scansRes = await fetch('admin-token-scans-handler.php');
+            if (scansRes.ok) {
+                const data = await scansRes.json();
+                if (data.success) {
+                    scansData = data.scans || [];
+                    usersMap = data.users_map || {};
+                    tokenScansMap = data.token_scans_map || {}; // Use global variable
+                    console.log('Token scans fetched:', scansData.length, scansData);
+                    console.log('Users map:', usersMap);
+                    console.log('Token scans map:', tokenScansMap);
+                }
+            } else {
+                console.log('Token scans fetch failed:', scansRes.status, scansRes.statusText);
+            }
+        } catch (e) {
+            console.log("Token scans fetch error:", e);
+        }
+
         const now = new Date();
         qrTableBody.innerHTML = "";
 
-        if (data.length === 0) {
+        if (tokensData.length === 0) {
             qrTableBody.innerHTML = `
                 <tr>
                     <td colspan="6" class="px-6 py-12 text-center">
@@ -156,11 +197,14 @@ async function loadQRCodes() {
             return;
         }
 
-        data.forEach(row => {
+        tokensData.forEach(row => {
             const tr = document.createElement("tr");
             tr.className = "hover:bg-gray-50 transition-colors cursor-pointer";
             tr.onclick = () => openModal(row);
 
+            // Check scan status
+            const latestScan = tokenScansMap[row.id];
+            
             // Compute expired status dynamically
             let expiredText = "No";
             let expiredClass = "bg-green-100 text-green-700";
@@ -172,6 +216,16 @@ async function loadQRCodes() {
                 expiredIcon = "bx-x-circle";
             }
 
+            // User and status display
+            let userDisplay = '<span class="text-gray-400"><i class="bx bx-minus"></i></span>';
+            let statusDisplay = '<span class="inline-flex items-center gap-1 px-3 py-1.5 bg-gray-100 text-gray-500 rounded-full text-sm font-medium">Not Scanned</span>';
+            
+            if (latestScan && latestScan.action) {
+                const userName = latestScan.users?.name || latestScan.user_name || 'Unknown User';
+                userDisplay = `<span class="font-medium text-gray-800">${userName}</span>`;
+                statusDisplay = getActionBadge(latestScan.action);
+            }
+
             tr.innerHTML = `
                 <td class="px-6 py-4">
                     <span class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg font-mono text-sm break-all">
@@ -179,21 +233,15 @@ async function loadQRCodes() {
                     </span>
                 </td>
                 <td class="px-6 py-4">
+                    ${userDisplay}
+                </td>
+                <td class="px-6 py-4">
                     <span class="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
                         <i class='bx bxs-map-pin'></i>${row.location_id}
                     </span>
                 </td>
-                <td class="px-6 py-4 text-sm text-gray-600">
-                    <div class="flex items-center gap-2">
-                        <i class='bx bx-time-five text-gray-400'></i>
-                        ${toPHTime(row.created_at)}
-                    </div>
-                </td>
-                <td class="px-6 py-4 text-sm text-gray-600">
-                    <div class="flex items-center gap-2">
-                        <i class='bx bx-timer text-gray-400'></i>
-                        ${toPHTime(row.expires_at)}
-                    </div>
+                <td class="px-6 py-4">
+                    ${statusDisplay}
                 </td>
                 <td class="px-6 py-4">
                     <span class="inline-flex items-center gap-1 px-3 py-1.5 ${expiredClass} rounded-full text-sm font-medium">
@@ -239,12 +287,59 @@ function openModal(row) {
 
     document.getElementById("modalToken").textContent = row.token;
     document.getElementById("modalLocation").textContent = row.location_id;
-    document.getElementById("modalCreated").textContent = toPHTime(row.created_at);
-    document.getElementById("modalExpires").textContent = toPHTime(row.expires_at);
     
-    const statusEl = document.getElementById("modalStatus");
-    statusEl.innerHTML = `<i class='bx ${expiredIcon} ${expiredClass} mr-1'></i>${expiredText}`;
-    statusEl.className = `font-medium ${expiredClass}`;
+    // Format and set Created At
+    const createdAt = row.created_at ? new Date(row.created_at).toLocaleString() : '-';
+    document.getElementById("modalCreated").textContent = createdAt;
+    
+    // Format and set Expires At
+    const expiresAt = row.expires_at ? new Date(row.expires_at).toLocaleString() : '-';
+    document.getElementById("modalExpires").textContent = expiresAt;
+    
+    // Get scan data for this token
+    const latestScan = tokenScansMap[row.id];
+    
+    // Set Status
+    let statusText = "Not Scanned";
+    let statusClass = "text-gray-500";
+    if (latestScan && latestScan.action) {
+        statusText = latestScan.action.replace('_', ' ').toUpperCase();
+        statusClass = "text-green-600";
+    }
+    const modalStatus = document.getElementById("modalStatus");
+    if (modalStatus) {
+        modalStatus.textContent = statusText;
+        modalStatus.className = `font-medium ${statusClass}`;
+    }
+    
+    // Add user and status to modal
+    const modalContent = document.querySelector("#tokenModal .bg-white.shadow-2xl");
+    if (modalContent) {
+        // Check if user/status elements exist, if not add them
+        let userRow = modalContent.querySelector(".user-row");
+        if (!userRow) {
+            const expiresRow = modalContent.querySelector("#modalExpires")?.parentNode;
+            if (expiresRow) {
+                userRow = document.createElement("div");
+                userRow.className = "bg-gray-50 rounded-xl p-4 user-row";
+                userRow.innerHTML = `
+                    <p class="text-xs text-gray-500 mb-1">Scanned By</p>
+                    <p id="modalUser" class="font-medium text-gray-800">-</p>
+                `;
+                expiresRow.parentNode.insertBefore(userRow, expiresRow.nextSibling);
+            }
+        }
+        
+        // Set scanned user
+        const modalUser = document.getElementById("modalUser");
+        if (modalUser) {
+            if (latestScan && latestScan.users) {
+                modalUser.textContent = latestScan.users.name || latestScan.users.email || 'Unknown User';
+            } else {
+                modalUser.textContent = '-';
+            }
+        }
+    }
 
     const modal = document.getElementById("tokenModal");
     modal.classList.remove("hidden");
@@ -292,7 +387,7 @@ async function deleteToken() {
 }
 
 /* ================= AUTO-REFRESH ================= */
-// setInterval(loadQRCodes, 25000);
+// setInterval(loadQRCodes, 15000);
 
 /* ================= INITIAL LOAD ================= */
 document.addEventListener("DOMContentLoaded", () => {
