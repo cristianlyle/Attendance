@@ -320,7 +320,7 @@ function openModal(row) {
                 userRow.className = "bg-gray-50 rounded-xl p-4 user-row";
                 userRow.innerHTML = `
                     <p class="text-xs text-gray-500 mb-1">Scanned By</p>
-                    <p id="modalUser" class="font-medium text-gray-800">-</p>
+                    <p id="modalUser" class="font-medium text-gray-800">No user scanned</p>
                 `;
                 expiresRow.parentNode.insertBefore(userRow, expiresRow.nextSibling);
             }
