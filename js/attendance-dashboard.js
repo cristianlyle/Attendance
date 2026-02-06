@@ -56,6 +56,129 @@ function calculateTotalHoursDecimal(timeIn, timeOut) {
     return diffHours > 0 ? diffHours : 0;
 }
 
+let currentAttendanceId = null;
+
+/* ================= MODAL FUNCTIONS ================= */
+function openModal(record) {
+    currentAttendanceId = record.id;
+    
+    const modal = document.getElementById('attendanceModal');
+    const modalContent = document.getElementById('modalContent');
+    
+    modalContent.innerHTML = `
+        
+        <div class="space-y-4">
+            <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
+                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center overflow-hidden">
+                    ${record.profile_image ? 
+                        `<img src="${record.profile_image}" alt="Profile" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='
+                        <span"></span>` :
+                        `<span">${record.user_name ? record.user_name.charAt(0).toUpperCase() : '?'}</span>`
+                    }
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-800">${record.user_name || 'Unknown Employee'}</p>
+                    <p class="text-sm text-gray-500">User ID: ${record.user_id}</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="p-4 bg-gray-50 rounded-xl">
+                    <p class="text-sm text-gray-500 mb-1">
+                        <i class='bx bx-calendar mr-1'></i>Date
+                    </p>
+                    <p class="font-semibold text-gray-800">${record.date}</p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-xl">
+                    <p class="text-sm text-gray-500 mb-1">
+                        <i class='bx bxs-map-pin mr-1 text-purple-500'></i>Location
+                    </p>
+                    <p class="font-semibold text-gray-800">${record.location || 'Unknown'}</p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-xl">
+                    <p class="text-sm text-gray-500 mb-1">
+                        <i class='bx bxs-log-in-circle mr-1 text-green-500'></i>Time In
+                    </p>
+                    <p class="font-semibold text-gray-800">${record.time_in ? toPHTimeOnly(record.time_in) : '--'}</p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-xl">
+                    <p class="text-sm text-gray-500 mb-1">
+                        <i class='bx bx-restaurant mr-1 text-blue-500'></i>Break In
+                    </p>
+                    <p class="font-semibold text-gray-800">${record.lunch_in ? toPHTimeOnly(record.lunch_in) : '--'}</p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-xl">
+                    <p class="text-sm text-gray-500 mb-1">
+                        <i class='bx bx-coffee mr-1 text-yellow-500'></i>Break Out
+                    </p>
+                    <p class="font-semibold text-gray-800">${record.lunch_out ? toPHTimeOnly(record.lunch_out) : '--'}</p>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-xl">
+                    <p class="text-sm text-gray-500 mb-1">
+                        <i class='bx bxs-log-out-circle mr-1 text-orange-500'></i>Time Out
+                    </p>
+                    <p class="font-semibold text-gray-800">${record.time_out ? toPHTimeOnly(record.time_out) : '--'}</p>
+                </div>
+            </div>
+            
+            <div class="p-4 bg-indigo-50 rounded-xl">
+                <p class="text-sm text-gray-500 mb-1">
+                    <i class='bx bxs-time-five mr-1 text-indigo-500'></i>Total Hours
+                </p>
+                <p class="font-semibold text-indigo-700 text-lg">${calculateTotalHours(record.time_in, record.time_out) || '--'}</p>
+            </div>
+        </div>
+    `;
+    
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    const modal = document.getElementById('attendanceModal');
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+    currentAttendanceId = null;
+}
+
+/* ================= DELETE ATTENDANCE ================= */
+async function deleteAttendance() {
+    if (!currentAttendanceId) return;
+    
+    if (!confirm('Are you sure you want to delete this attendance record? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const res = await fetch(`${SUPABASE_URL}/attendance?id=eq.${currentAttendanceId}`, {
+            method: 'DELETE',
+            headers: {
+                apikey: SUPABASE_KEY,
+                Authorization: `Bearer ${SUPABASE_KEY}`
+            }
+        });
+        
+        if (res.ok) {
+            showToast('Attendance record deleted successfully!', 'success');
+            closeModal();
+            fetchAttendance();
+            loadStats();
+        } else {
+            throw new Error('Failed to delete');
+        }
+    } catch (error) {
+        console.error('Error deleting attendance:', error);
+        showToast('Failed to delete attendance record', 'error');
+    }
+}
+
+/* ================= CLOSE MODAL ON OUTSIDE CLICK ================= */
+document.getElementById('attendanceModal')?.addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) {
+        closeModal();
+    }
+});
+
 /* ================= TOAST NOTIFICATIONS ================= */
 function showToast(message, type = "info") {
     const toast = document.createElement("div");
@@ -263,8 +386,10 @@ async function fetchAttendance() {
                 const placeholderImage = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2310B981'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E`;
                 
                 const employeeRow = document.createElement("tr");
-                employeeRow.className = "hover:bg-gray-50 transition-colors employee-row hidden";
+                employeeRow.className = "hover:bg-gray-50 transition-colors employee-row hidden cursor-pointer";
                 employeeRow.setAttribute("data-parent-date", date);
+                employeeRow.setAttribute("data-record", JSON.stringify({...record, user_name: userName, profile_image: profileImage}));
+                employeeRow.onclick = () => openModal(JSON.parse(employeeRow.getAttribute('data-record')));
                 
                 employeeRow.innerHTML = `
                     <td class="px-6 py-4 whitespace-nowrap">
@@ -382,7 +507,11 @@ function exportCSV() {
 }
 
 /* ================= INITIALIZE ================= */
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener('DOMContentLoaded', () => {
     fetchAttendance();
     loadStats();
+    
+    // Delete button event listener
+    document.getElementById('deleteBtn').addEventListener('click', deleteAttendance);
 });
+

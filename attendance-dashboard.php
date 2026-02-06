@@ -182,6 +182,34 @@ require 'db.php';
         </main>
     </div>
 
+    <!-- ================= ATTENDANCE DETAIL MODAL ================= -->
+    <div id="attendanceModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 transform transition-all">
+            <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="bg-green-100 p-2 rounded-lg">
+                        <i class='bx bx-calendar-check text-xl text-green-600'></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800">Attendance Details</h3>
+                </div>
+                <button onclick="closeModal()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <i class='bx bx-x text-xl text-gray-500'></i>
+                </button>
+            </div>
+            <div class="p-6" id="modalContent">
+                <!-- Modal content will be injected here -->
+            </div>
+            <div class="p-6 border-t border-gray-100 flex justify-end gap-3">
+                <button onclick="closeModal()" class="flex items-center gap-2 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors">
+                    <i class='bx bx-x'></i>Cancel
+                </button>
+                <button id="deleteBtn" class="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors">
+                    <i class='bx bx-trash'></i>Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/attendance-dashboard.js" defer></script>
     <script>
         // Update current time

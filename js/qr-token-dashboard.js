@@ -292,7 +292,7 @@ async function deleteToken() {
 }
 
 /* ================= AUTO-REFRESH ================= */
-setInterval(loadQRCodes, 25000);
+// setInterval(loadQRCodes, 25000);
 
 /* ================= INITIAL LOAD ================= */
 document.addEventListener("DOMContentLoaded", () => {

@@ -79,7 +79,6 @@ require 'db.php';
                         <?php
                         $profileImage = get_profile_image($_SESSION['user']['profile_image'] ?? null);
                         ?>
-                        <img src="<?= $profileImage ?>" alt="Profile" class="w-8 h-8 rounded-full object-cover border-2 border-green-500">
                         <span>Welcome, <?= htmlspecialchars($_SESSION['user']['name']) ?></span>
                         <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Admin</span>
                     </p>
