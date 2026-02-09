@@ -17,59 +17,160 @@ require 'db.php';
     <link rel="stylesheet" href="css/employee-dashboard.css">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .sidebar {
+            transition: transform 0.3s ease;
+        }
+        
+        .sidebar-link {
+            transition: all 0.2s ease;
+        }
+        
+        .sidebar-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-link.active {
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+        
+        .scan-button {
+            transition: all 0.2s ease;
+        }
+        
+        .scan-button:hover {
+            transform: scale(1.02);
+        }
+        
+        .scan-button:active {
+            transform: scale(0.98);
+        }
+        
+        /* Scanner frame glow effect */
+        .scanner-frame.active {
+            box-shadow: 0 0 0 2px #22c55e, 0 0 20px rgba(34, 197, 94, 0.3);
+        }
+        
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .dashboard-section {
+            display: none;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        .dashboard-section.active {
+            display: block;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 2px;
+        }
+        
+        /* Status badge styles */
+        .badge-active {
+            background-color: #DCFCE7;
+            color: #166534;
+        }
+        
+        .badge-inactive {
+            background-color: #FEE2E2;
+            color: #DC2626;
+        }
+        
+        .badge-pending {
+            background-color: #FEF3C7;
+            color: #D97706;
+        }
+    </style>
 </head>
-<body class="bg-gradient-to-br from-green-50 to-green-100 font-sans min-h-screen">
+<body class="bg-[#F8FAFC] font-sans min-h-screen">
 
     <!-- Mobile Header -->
-    <div class="lg:hidden bg-green-600 text-white p-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50">
-        <button onclick="toggleSidebar()" class="text-white">
+    <div class="lg:hidden bg-[#14532D] text-white p-4 flex justify-between items-center fixed top-0 left-0 right-0 z-50 shadow-md">
+        <button onclick="toggleSidebar()" class="text-white p-1">
             <i class='bx bx-menu text-2xl'></i>
         </button>
         <div class="flex items-center gap-2">
-            <span class="font-bold text-lg" id="mobileHeaderTitle">Employee Dashboard</span>
+            <span class="font-semibold text-sm" id="mobileHeaderTitle">QR Scanner</span>
         </div>
     </div>
 
     <div class="flex">
         <!-- Sidebar -->
-        <aside id="sidebar" class="sidebar fixed inset-y-0 left-0 w-52 bg-green-700 text-white transform -translate-x-full lg:translate-x-0 transition-transform duration-300 z-50">
-            <div class="p-6 pt-16 lg:pt-6">
-                <div class="flex items-center gap-3 mb-8">
-                    <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-                        <i class='bx bxs-user-badge text-green-600 text-xl'></i>
+        <aside id="sidebar" class="sidebar fixed inset-y-0 left-0 w-56 bg-[#14532D] text-white transform -translate-x-full lg:translate-x-0 transition-transform duration-300 z-50 shadow-lg">
+            <div class="p-5 pt-16 lg:pt-5">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center">
+                        <i class='bx bxs-user-badge text-xl text-white'></i>
                     </div>
                     <div>
                         <p class="text-xs text-green-200">Employee Panel</p>
                     </div>
                 </div>
                 
-                <nav class="space-y-2">
-                    <a href="#" onclick="showSection('scan', this)" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-lg transition-colors">
-                        <i class='bx bx-qr-scan text-xl'></i>
-                        <span>Scan</span>
+                <nav class="space-y-1">
+                    <a href="#" onclick="showSection('scan', this)" class="sidebar-link active flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors">
+                        <i class='bx bx-qr-scan text-lg'></i>
+                        <span class="text-sm">Scan QR</span>
                     </a>
-                    <a href="#" onclick="showSection('my-attendance', this)" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors">
-                        <i class='bx bx-calendar-check text-xl'></i>
-                        <span>My Attendance</span>
+                    <a href="#" onclick="showSection('my-attendance', this)" class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors">
+                        <i class='bx bx-calendar-check text-lg'></i>
+                        <span class="text-sm">My Attendance</span>
                     </a>
-                    <a href="#" onclick="showSection('history', this)" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg transition-colors">
-                        <i class='bx bx-history text-xl'></i>
-                        <span>History</span>
+                    <a href="#" onclick="showSection('history', this)" class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors">
+                        <i class='bx bx-history text-lg'></i>
+                        <span class="text-sm">History</span>
                     </a>
                 </nav>
             </div>
             
-            <div class="absolute bottom-0 left-0 right-0 p-6 border-t border-green-600">
-                <div class="flex items-center gap-3 mb-4">
+            <div class="absolute bottom-0 left-0 right-0 p-5 border-t border-green-700/50">
+                <div class="flex items-center gap-3 mb-3">
                     <?php
                     $profileImage = get_profile_image($_SESSION['user']['profile_image'] ?? null);
                     ?>
                     <div>
-                        <p class="font-medium text-sm"><?= htmlspecialchars($_SESSION['user']['name']) ?></p>
+                        <p class="font-medium text-sm text-white"><?= htmlspecialchars($_SESSION['user']['name']) ?></p>
                         <p class="text-xs text-green-200">Employee</p>
                     </div>
                 </div>
-                <a href="logout.php" class="flex items-center gap-2 text-green-200 hover:text-white transition-colors">
+                <a href="logout.php" class="flex items-center gap-2 text-green-200 hover:text-white transition-colors text-sm">
                     <i class='bx bx-log-out'></i>
                     <span>Logout</span>
                 </a>
@@ -77,48 +178,59 @@ require 'db.php';
         </aside>
 
         <!-- Main Content -->
-        <main class="lg:ml-52 p-4 lg:p-8 mt-16 lg:mt-0 w-full min-h-screen">
+        <main class="lg:ml-56 p-4 lg:p-6 mt-14 lg:mt-0 w-full min-h-screen">
             
             <!-- Scan Section -->
             <div id="section-scan" class="dashboard-section active">
-                <!-- Welcome Section -->
-                <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-xl p-4 mb-6 text-white shadow-lg">
+                <!-- Welcome Banner -->
+                <div class="bg-[#166534] mt-5 rounded-xl p-4 mb-5 text-white shadow-sm">
                     <div class="flex items-center gap-3">
-                        <?php
-                        $profileImage = get_profile_image($_SESSION['user']['profile_image'] ?? null);
-                        ?>
+                        <div class="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center">
+                            <i class='bx bxs-user text-xl'></i>
+                        </div>
                         <div>
-                            <h2 class="text-lg font-bold"><?= htmlspecialchars($_SESSION['user']['name']) ?>!</h2>
-                            <p class="text-green-100 text-sm">Scan QR to mark attendance</p>
+                            <h2 class="text-lg font-semibold"><?= htmlspecialchars($_SESSION['user']['name']) ?></h2>
+                            <p class="text-green-100 text-sm">Scan QR code to mark your attendance</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- QR Scanner Section -->
-                <div class="bg-white rounded-xl shadow-lg p-4 mb-6 relative">
+                <!-- QR Scanner Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 max-w-md mx-auto">
                     <div class="flex items-center gap-2 mb-4">
-                        <div class="bg-green-100 p-1.5 rounded-lg">
-                            <i class='bx bx-qr-scan text-lg text-green-600'></i>
+                        <div class="w-8 h-8 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
+                            <i class='bx bx-qr-scan text-lg text-[#3B82F6]'></i>
                         </div>
-                        <h3 class="text-lg font-bold text-gray-800">QR Scanner</h3>
+                        <h3 class="text-base font-semibold text-[#0F172A]">QR Scanner</h3>
                     </div>
 
                     <!-- Video Preview -->
-                    <div class="scanner-container" id="scannerContainer">
-                        <video id="qrVideo" autoplay playsinline muted></video>
+                    <div class="scanner-container relative rounded-lg overflow-hidden bg-[#020617]" id="scannerContainer">
+                        <video id="qrVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
                         <div id="scannerOverlay" class="scanner-overlay" style="display: none;"></div>
-                        <div id="scanMessage" class="absolute bottom-2 left-0 right-0 text-center text-white text-sm bg-black/50 py-1" style="display: none;">
+                        <!-- Scanner frame -->
+                        <div class="scanner-frame absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div class="w-48 h-48 border-2 border-gray-500 rounded-lg relative">
+                                <div class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#22C55E] rounded-tl-lg"></div>
+                                <div class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-[#22C55E] rounded-tr-lg"></div>
+                                <div class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-[#22C55E] rounded-bl-lg"></div>
+                                <div class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-[#22C55E] rounded-br-lg"></div>
+                            </div>
+                        </div>
+                        <div id="scanMessage" class="absolute bottom-3 left-0 right-0 text-center text-white text-xs bg-black/60 py-1.5 rounded mx-3" style="display: none;">
                             Scanning...
                         </div>
                     </div>
+                    
                     <!-- Scanner Controls -->
-                    <div class="justify-center gap-2 mt-4 flex">
+                    <div class="mt-4 flex justify-center">
                         <button id="startScanBtn" onclick="toggleScanner()"
-                            class="w-32 flex items-center justify-center gap-2 py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-all shadow-md">
-                            <i class='bx bx-qr-scan'></i>
-                            <span id="scanBtnText">Scan</span>
+                            class="scan-button w-full max-w-[200px] flex items-center justify-center gap-2 py-3 bg-[#166534] hover:bg-[#15803D] text-white rounded-lg font-medium shadow-sm text-sm">
+                            <i class='bx bx-qr-scan text-lg'></i>
+                            <span id="scanBtnText">Start Scan</span>
                         </button>
                     </div>
+                    
                     <!-- Status Message -->
                     <div id="attendanceMsg" class="mt-4 p-3 rounded-lg text-center text-sm font-medium"></div>
                 </div>
@@ -126,57 +238,57 @@ require 'db.php';
 
             <!-- My Attendance Section -->
             <div id="section-my-attendance" class="dashboard-section">
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <div class="flex items-center gap-2 mb-6">
-                        <div class="bg-blue-100 p-1.5 rounded-lg">
-                            <i class='bx bx-calendar-check text-lg text-blue-600'></i>
+                <div class="bg-white mt-5 rounded-xl shadow-sm border border-gray-100 p-5">
+                    <div class="flex items-center gap-2 mb-5">
+                        <div class="w-8 h-8 bg-[#EFF6FF] rounded-lg flex items-center justify-center">
+                            <i class='bx bx-calendar-check text-lg text-[#3B82F6]'></i>
                         </div>
-                        <h3 class="text-lg font-bold text-gray-800">My Attendance</h3>
+                        <h3 class="text-base font-semibold text-[#0F172A]">My Attendance</h3>
                     </div>
 
                     <!-- Today's Summary Cards -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                        <div class="bg-gradient-to-br from-green-400 to-green-500 rounded-xl p-4 text-white">
-                            <i class='bx bxs-log-in-circle text-2xl mb-2'></i>
-                            <p class="text-xs text-green-100">Time In</p>
-                            <p id="ma-timeIn" class="text-xl font-bold">--:--</p>
+                    <div class="grid grid-cols-2 gap-3 mb-5">
+                        <div class="bg-[#DCFCE7] rounded-lg p-3">
+                            <i class='bx bxs-log-in-circle text-xl text-[#166534] mb-1'></i>
+                            <p class="text-xs text-[#166534]/70">Time In</p>
+                            <p id="ma-timeIn" class="text-lg font-semibold text-[#0F172A]">--:--</p>
                         </div>
-                        <div class="bg-gradient-to-br from-orange-400 to-orange-500 rounded-xl p-4 text-white">
-                            <i class='bx bxs-log-out-circle text-2xl mb-2'></i>
-                            <p class="text-xs text-orange-100">Time Out</p>
-                            <p id="ma-timeOut" class="text-xl font-bold">--:--</p>
+                        <div class="bg-[#FEF3C7] rounded-lg p-3">
+                            <i class='bx bxs-log-out-circle text-xl text-[#D97706] mb-1'></i>
+                            <p class="text-xs text-[#D97706]/70">Time Out</p>
+                            <p id="ma-timeOut" class="text-lg font-semibold text-[#0F172A]">--:--</p>
                         </div>
-                        <div class="bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl p-4 text-white">
-                            <i class='bx bx-restaurant text-2xl mb-2'></i>
-                            <p class="text-xs text-blue-100">Break In</p>
-                            <p id="ma-lunchIn" class="text-xl font-bold">--:--</p>
+                        <div class="bg-[#EFF6FF] rounded-lg p-3">
+                            <i class='bx bx-restaurant text-xl text-[#3B82F6] mb-1'></i>
+                            <p class="text-xs text-[#3B82F6]/70">Break In</p>
+                            <p id="ma-lunchIn" class="text-lg font-semibold text-[#0F172A]">--:--</p>
                         </div>
-                        <div class="bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-xl p-4 text-white">
-                            <i class='bx bx-coffee text-2xl mb-2'></i>
-                            <p class="text-xs text-yellow-100">Break Out</p>
-                            <p id="ma-lunchOut" class="text-xl font-bold">--:--</p>
+                        <div class="bg-[#F3E8FF] rounded-lg p-3">
+                            <i class='bx bx-coffee text-xl text-[#A855F7] mb-1'></i>
+                            <p class="text-xs text-[#A855F6]/70">Break Out</p>
+                            <p id="ma-lunchOut" class="text-lg font-semibold text-[#0F172A]">--:--</p>
                         </div>
                     </div>
 
                     <!-- Today's Details -->
-                    <div class="bg-gray-50 rounded-xl p-4">
-                        <h4 class="font-bold text-gray-800 mb-3">Today's Details</h4>
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between py-2 border-b border-gray-200">
-                                <span class="text-gray-600">Date</span>
-                                <span id="ma-date" class="font-medium text-gray-800">--</span>
+                    <div class="bg-[#F8FAFC] rounded-lg p-4 border border-gray-100">
+                        <h4 class="font-medium text-[#0F172A] mb-3 text-sm">Today's Details</h4>
+                        <div class="space-y-2.5">
+                            <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                                <span class="text-[#475569] text-sm">Date</span>
+                                <span id="ma-date" class="font-medium text-[#0F172A] text-sm">--</span>
                             </div>
-                            <div class="flex items-center justify-between py-2 border-b border-gray-200">
-                                <span class="text-gray-600">Location</span>
-                                <span id="ma-location" class="font-medium text-gray-800">Not marked</span>
+                            <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                                <span class="text-[#475569] text-sm">Location</span>
+                                <span id="ma-location" class="font-medium text-[#0F172A] text-sm">Not marked</span>
                             </div>
-                            <div class="flex items-center justify-between py-2 border-b border-gray-200">
-                                <span class="text-gray-600">Status</span>
-                                <span id="ma-status" class="px-3 py-1 rounded-full text-sm font-medium">Not Started</span>
+                            <div class="flex items-center justify-between py-2 border-b border-gray-100">
+                                <span class="text-[#475569] text-sm">Status</span>
+                                <span id="ma-status" class="px-2.5 py-1 rounded-full text-xs font-medium badge-pending">Not Started</span>
                             </div>
                             <div class="flex items-center justify-between py-2">
-                                <span class="text-gray-600">Total Hours</span>
-                                <span id="ma-totalHours" class="font-medium text-gray-800">--</span>
+                                <span class="text-[#475569] text-sm">Total Hours</span>
+                                <span id="ma-totalHours" class="font-medium text-[#0F172A] text-sm">--</span>
                             </div>
                         </div>
                     </div>
@@ -185,33 +297,35 @@ require 'db.php';
 
             <!-- History Section -->
             <div id="section-history" class="dashboard-section">
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-white mt-5 rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="flex items-center justify-between p-4 border-b border-gray-100">
                         <div class="flex items-center gap-2">
-                            <div class="bg-purple-100 p-1.5 rounded-lg">
-                                <i class='bx bx-history text-lg text-purple-600'></i>
+                            <div class="w-8 h-8 bg-[#F3E8FF] rounded-lg flex items-center justify-center">
+                                <i class='bx bx-history text-lg text-[#A855F6]'></i>
                             </div>
-                            <h3 class="text-lg font-bold text-gray-800">Attendance History</h3>
+                            <h3 class="text-base font-semibold text-[#0F172A]">Attendance History</h3>
                         </div>
-                        <button onclick="exportCSV()" class="py-1.5 px-3 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm transition-colors">
+                        <button onclick="exportCSV()" class="flex items-center gap-1.5 py-1.5 px-3 bg-[#166534] hover:bg-[#15803D] text-white rounded-lg text-xs font-medium transition-colors">
                             <i class='bx bx-download'></i> Export
                         </button>
                     </div>
 
                     <div class="overflow-x-auto">
                         <table id="attendanceTable" class="w-full text-sm">
-                            <thead class="bg-gray-50">
+                            <thead class="bg-[#F8FAFC]">
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Date</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Time In</th> 
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Break In</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Break Out</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Time Out</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Location</th>
-                                    <th class="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Hours</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-[#475569] uppercase tracking-wider">Date</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-[#475569] uppercase tracking-wider">Time In</th> 
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-[#475569] uppercase tracking-wider">Break In</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-[#475569] uppercase tracking-wider">Break Out</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-[#475569] uppercase tracking-wider">Time Out</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-[#475569] uppercase tracking-wider">Location</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-[#475569] uppercase tracking-wider">Hours</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-100"></tbody>
+                            <tbody class="divide-y divide-gray-100">
+                                <!-- Data will be loaded dynamically -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -225,19 +339,17 @@ require 'db.php';
 
     <!-- Page Indicators -->
     <div class="fixed bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-40 lg:hidden">
-        <div id="indicator-scan" class="w-3 h-3 rounded-full bg-green-600 transition-all"></div>
-        <div id="indicator-my-attendance" class="w-3 h-3 rounded-full bg-gray-300 transition-all"></div>
-        <div id="indicator-history" class="w-3 h-3 rounded-full bg-gray-300 transition-all"></div>
+        <div id="indicator-scan" class="w-2.5 h-2.5 rounded-full bg-[#166534] transition-all"></div>
+        <div id="indicator-my-attendance" class="w-2.5 h-2.5 rounded-full bg-gray-300 transition-all"></div>
+        <div id="indicator-history" class="w-2.5 h-2.5 rounded-full bg-gray-300 transition-all"></div>
     </div>
 
-    <!-- Toast Notification (positioned relative to QR Scanner section) -->
-    <div id="toast" class="fixed px-4 py-3 rounded-xl 
-    shadow-lg transform -translate-y-20 opacity-0 transition-all 
-    duration-300 z-50 text-sm" style="top: 100px; right: calc(50% - 20rem); max-width: 400px;">
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed px-4 py-2.5 rounded-lg shadow-lg transform -translate-y-20 opacity-0 transition-all duration-300 z-50 text-sm" style="top: 100px; right: calc(50% - 10rem); max-width: 320px;">
     </div>
 
     <!-- HTTPS Warning -->
-    <div id="httpsWarning" class="fixed top-20 left-0 right-0 bg-yellow-100 border-b border-yellow-400 px-4 py-2 text-center text-yellow-800 text-sm" style="display: none;">
+    <div id="httpsWarning" class="fixed top-14 left-0 right-0 bg-[#FEF3C7] border-b border-[#F59E0B] px-4 py-2 text-center text-[#92400E] text-sm" style="display: none;">
         <i class='bx bx-error-circle mr-1'></i>
         Camera requires HTTPS. Use a secure connection or localhost.
     </div>
@@ -284,10 +396,10 @@ require 'db.php';
         function showSection(sectionName, element, fromSwipe = false) {
             // Update sidebar active state
             document.querySelectorAll('.sidebar-link').forEach(link => {
-                link.classList.remove('active', 'bg-green-800');
+                link.classList.remove('active', 'bg-white/15');
             });
             if (element) {
-                element.classList.add('active', 'bg-green-800');
+                element.classList.add('active', 'bg-white/15');
             }
             
             // Update page indicators
@@ -322,7 +434,13 @@ require 'db.php';
                 mobileHeaderTitle.textContent = sectionTitles[sectionName];
             }
             
-            // Don't close sidebar when clicking links - keep it visible
+            // Close sidebar on mobile after selection
+            if (window.innerWidth < 1024) {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
         }
         
         function updateIndicators(sectionName) {
@@ -331,10 +449,10 @@ require 'db.php';
                 if (indicator) {
                     if (section === sectionName) {
                         indicator.classList.remove('bg-gray-300');
-                        indicator.classList.add('bg-green-600', 'w-6');
+                        indicator.classList.add('bg-[#166534]');
                     } else {
-                        indicator.classList.remove('bg-green-600', 'w-6');
-                        indicator.classList.add('bg-gray-300', 'w-3');
+                        indicator.classList.remove('bg-[#166534]');
+                        indicator.classList.add('bg-gray-300');
                     }
                 }
             });
@@ -397,7 +515,7 @@ require 'db.php';
             });
             
             if (targetLink) {
-                showSection(sectionName, targetLink, true); // true = fromSwipe
+                showSection(sectionName, targetLink, true);
             }
         }
         
@@ -411,53 +529,6 @@ require 'db.php';
             document.getElementById('httpsWarning').style.display = 'block';
         }
     </script>
-    <style>
-        @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-        
-        @keyframes slideInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-        
-        .dashboard-section {
-            display: none;
-            animation: slideInRight 0.3s ease-out;
-        }
-        
-        .dashboard-section.active {
-            display: block;
-        }
-        
-        .sidebar-link.active {
-            background-color: rgba(255, 255, 255, 0.15);
-        }
-        
-        .sidebar-link:hover:not(.active) {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-        
-        /* Hide scrollbar for cleaner swipe experience */
-        .dashboard-section.active {
-            overflow-x: hidden;
-        }
-    </style>
     <script src="js/employee-dashboard.js" defer></script>
 </body>
 </html>
-
-

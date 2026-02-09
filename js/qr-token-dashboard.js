@@ -4,6 +4,8 @@ const SUPABASE_KEY = "sb_publishable__N_eKBbedJtTPW9AHefR5Q_wRFiUXey";
 const qrTableBody = document.querySelector("#qrTable tbody");
 let selectedTokenId = null;
 let tokenScansMap = {}; // Global storage for token scans
+let lastKnownTokenId = null;
+let lastScanTime = null;
 
 /* ================= CHECK AND UPDATE EXPIRED TOKENS ================= */
 async function checkAndUpdateExpiredTokens() {
@@ -385,11 +387,117 @@ async function deleteToken() {
 /* ================= AUTO-REFRESH ================= */
 // setInterval(loadQRCodes, 15000);
 
+/* ================= MONITOR FOR SCANNED TOKENS ================= */
+async function startMonitoringForScannedTokens() {
+    // Get the last known active token ID and scan time
+    try {
+        const tokenRes = await fetch(
+            `${SUPABASE_URL}/qr_tokens?is_active=eq.true&order=created_at.desc&limit=1`,
+            {
+                headers: {
+                    "apikey": SUPABASE_KEY,
+                    "Authorization": `Bearer ${SUPABASE_KEY}`
+                }
+            }
+        );
+        const tokenData = await tokenRes.json();
+        if (tokenData && tokenData.length > 0) {
+            lastKnownTokenId = tokenData[0].id;
+            
+            // Get the latest scan time for this token
+            const scanRes = await fetch(
+                `${SUPABASE_URL}/token_scans?token_id=eq.${tokenData[0].id}&order=scanned_at.desc&limit=1`,
+                {
+                    headers: {
+                        "apikey": SUPABASE_KEY,
+                        "Authorization": `Bearer ${SUPABASE_KEY}`
+                    }
+                }
+            );
+            const scanData = await scanRes.json();
+            if (scanData && scanData.length > 0) {
+                lastScanTime = scanData[0].scanned_at;
+            }
+        }
+    } catch (error) {
+        console.error("Error getting initial token:", error);
+    }
+
+    // Poll every 1 second to check if the current token was scanned
+    setInterval(async () => {
+        try {
+            // Get the current active token
+            const tokenRes = await fetch(
+                `${SUPABASE_URL}/qr_tokens?is_active=eq.true&order=created_at.desc&limit=1`,
+                {
+                    headers: {
+                        "apikey": SUPABASE_KEY,
+                        "Authorization": `Bearer ${SUPABASE_KEY}`
+                    }
+                }
+            );
+            const tokenData = await tokenRes.json();
+            
+            // If no active token found, reload to get updated list
+            if (!tokenData || tokenData.length === 0) {
+                loadQRCodes();
+                loadStats();
+                return;
+            }
+            
+            const currentTokenData = tokenData[0];
+            
+            // Check if the token has changed (new token was generated)
+            if (lastKnownTokenId && currentTokenData.id !== lastKnownTokenId) {
+                // New token was generated, update our reference
+                lastKnownTokenId = currentTokenData.id;
+                lastScanTime = null;
+                loadQRCodes();
+                loadStats();
+                return;
+            }
+            
+            // Check if the current token has been scanned
+            const scanRes = await fetch(
+                `${SUPABASE_URL}/token_scans?token_id=eq.${currentTokenData.id}&order=scanned_at.desc&limit=1`,
+                {
+                    headers: {
+                        "apikey": SUPABASE_KEY,
+                        "Authorization": `Bearer ${SUPABASE_KEY}`
+                    }
+                }
+            );
+            const scanData = await scanRes.json();
+            
+            if (scanData && scanData.length > 0) {
+                const latestScanTime = scanData[0].scanned_at;
+                
+                // If we have a new scan that we haven't processed yet
+                if (lastScanTime !== latestScanTime) {
+                    // Update the last scan time
+                    lastScanTime = latestScanTime;
+                    
+                    // Reload to show updated scan status
+                    loadQRCodes();
+                    loadStats();
+                    
+                    // Show notification
+                    showToast("Token was scanned! Updated status.", "info");
+                }
+            }
+            
+        } catch (error) {
+            console.error("Error monitoring tokens:", error);
+        }
+    }, 1000);
+}
+
 /* ================= INITIAL LOAD ================= */
 document.addEventListener("DOMContentLoaded", () => {
     checkAndUpdateExpiredTokens(); // Check and update expired tokens first
     loadQRCodes();
     loadStats();
+    startMonitoringForScannedTokens(); // Start monitoring for scanned tokens
     // Check for expired tokens every 30 seconds
     setInterval(checkAndUpdateExpiredTokens, 30000);
 });

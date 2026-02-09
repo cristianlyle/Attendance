@@ -15,53 +15,74 @@ require 'db.php';
     <title>QR Tokens Dashboard - Attendance System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <style>
+        .stat-card {
+            transition: all 0.2s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .sidebar-link {
+            transition: all 0.2s ease;
+        }
+        
+        .sidebar-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-link.active {
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+    </style>
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
 
     <div class="flex min-h-screen">
         <!-- ================= SIDEBAR ================= -->
-        <aside class="w-64 bg-gradient-to-b from-green-700 to-green-800 text-white flex flex-col fixed min-h-screen shadow-xl">
+        <aside class="w-64 bg-[#14532D] text-white flex flex-col fixed min-h-screen shadow-lg">
             <div class="p-6">
                 <div class="flex items-center justify-center mb-6">
-                    <div class="bg-white/20 p-3 rounded-full">
-                        <i class='bx bxs-dashboard text-3xl'></i>
+                    <div class="bg-white/10 p-3 rounded-full">
+                        <i class='bx bxs-dashboard text-2xl'></i>
                     </div>
                 </div>
-                <h2 class="text-xl font-bold text-center">Admin Panel</h2>
-                <p class="text-green-200 text-sm text-center mt-1">Attendance System</p>
+                <h2 class="text-lg font-semibold text-center">Admin Panel</h2>
+                <p class="text-green-200 text-xs text-center mt-1">Attendance System</p>
             </div>
             <nav class="flex-1 px-4 pb-6">
-                <ul class="space-y-2">
+                <ul class="space-y-1">
                     <li>
-                        <a href="admin-dashboard.php" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 text-green-100 hover:text-white transition-colors">
+                        <a href="admin-dashboard.php" class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-white/10 text-green-100 hover:text-white">
                             <i class='bx bxs-home text-lg'></i>
-                            <span>Dashboard</span>
+                            <span class="text-sm">Dashboard</span>
                         </a>
                     </li>
                     <li>
-                        <a href="manage-user-dashboard.php" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 text-green-100 hover:text-white transition-colors">
+                        <a href="manage-user-dashboard.php" class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-white/10 text-green-100 hover:text-white">
                             <i class='bx bxs-user-detail text-lg'></i>
-                            <span>Manage Users</span>
+                            <span class="text-sm">Manage Employees</span>
                         </a>
                     </li>
                     <li>
-                        <a href="attendance-dashboard.php" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 text-green-100 hover:text-white transition-colors">
+                        <a href="attendance-dashboard.php" class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-white/10 text-green-100 hover:text-white">
                             <i class='bx bx-calendar-check text-lg'></i>
-                            <span>Attendance</span>
+                            <span class="text-sm">Attendance</span>
                         </a>
                     </li>
                     <li>
-                        <a href="qr-token-dashboard.php" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 text-white">
+                        <a href="qr-token-dashboard.php" class="sidebar-link active flex items-center gap-3 px-4 py-2.5 rounded-lg text-white">
                             <i class='bx bx-qr text-lg'></i>
-                            <span>QR Tokens</span>
+                            <span class="text-sm">QR Tokens</span>
                         </a>
                     </li>
                 </ul>
             </nav>
             <div class="px-4 pb-6">
-                <a href="logout.php" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500/80 hover:bg-red-500 text-white transition-colors">
+                <a href="logout.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-red-500/80 hover:bg-red-500 text-white transition-colors">
                     <i class='bx bxs-log-out text-lg'></i>
-                    <span>Logout</span>
+                    <span class="text-sm">Logout</span>
                 </a>
             </div>
         </aside>
@@ -95,7 +116,7 @@ require 'db.php';
 
             <!-- Stats -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-white rounded-2xl shadow-lg p-6">
+                <div class="stat-card bg-white rounded-2xl shadow-lg p-6">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-gray-500 text-sm font-medium">Active Tokens</p>
@@ -106,8 +127,8 @@ require 'db.php';
                         </div>
                     </div>
                 </div>
-               
-                <div class="bg-white rounded-2xl shadow-lg p-6">
+                
+                <div class="stat-card bg-white rounded-2xl shadow-lg p-6">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-gray-500 text-sm font-medium">Expired Tokens</p>
@@ -118,7 +139,7 @@ require 'db.php';
                         </div>
                     </div>
                 </div>
-                 <div class="bg-white rounded-2xl shadow-lg p-6">
+                <div class="stat-card bg-white rounded-2xl shadow-lg p-6">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-gray-500 text-sm font-medium">Total Tokens</p>

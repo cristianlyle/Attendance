@@ -14,21 +14,26 @@ if (isset($_POST['login'])) {
 
         // Verify hashed password
         if (password_verify($password, $user['password_hash'])) {
-            // Save session
-            $_SESSION['user'] = [
-                'name' => $user['name'],
-                'email' => $user['email'],
-                'role' => $user['role'],
-                'id' => $user['id']
-            ];
-
-            // Redirect based on role
-            if ($user['role'] === 'admin') {
-                header("Location: admin-dashboard.php");
-                exit();
+            // Check if user is inactive
+            if (isset($user['status']) && $user['status'] === 'inactive') {
+                $error = "Your account is inactive. Please contact the administrator.";
             } else {
-                header("Location: employee-dashboard.php");
-                exit();
+                // Save session
+                $_SESSION['user'] = [
+                    'name' => $user['name'],
+                    'email' => $user['email'],
+                    'role' => $user['role'],
+                    'id' => $user['id']
+                ];
+
+                // Redirect based on role
+                if ($user['role'] === 'admin') {
+                    header("Location: admin-dashboard.php");
+                    exit();
+                } else {
+                    header("Location: employee-dashboard.php");
+                    exit();
+                }
             }
         } else {
             $error = "Incorrect password.";

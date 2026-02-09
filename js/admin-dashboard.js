@@ -7,7 +7,10 @@ const qrTableBody = document.querySelector("#qrTable tbody");
 
 let countdownInterval = null;
 let currentToken = null;
+let currentTokenId = null;
 let isGenerating = false;
+let lastScanCheck = null;
+let scanPollingInterval = null;
 
 /* ================= TIME HELPERS ================= */
 function toPHTime(dateString) {
@@ -147,6 +150,7 @@ async function generateQRCode() {
 
         startCountdown(expiresAt, token);
         currentToken = token;
+        currentTokenId = null;
         loadStats();
 
     } catch (err) {
@@ -490,11 +494,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /* ================= MONITOR FOR USED TOKENS ================= */
 let lastKnownTokenId = null;
+let lastScanTime = null;
 
 async function startMonitoringForUsedTokens() {
-    // Get the last known active token ID
+    // Get the last known active token ID and scan time
     try {
-        const res = await fetch(
+        // Get the current active token
+        const tokenRes = await fetch(
             `${SUPABASE_URL}/qr_tokens?is_active=eq.true&order=created_at.desc&limit=1`,
             {
                 headers: {
@@ -503,19 +509,35 @@ async function startMonitoringForUsedTokens() {
                 }
             }
         );
-        const data = await res.json();
-        if (data && data.length > 0) {
-            lastKnownTokenId = data[0].id;
+        const tokenData = await tokenRes.json();
+        if (tokenData && tokenData.length > 0) {
+            lastKnownTokenId = tokenData[0].id;
+            currentTokenId = tokenData[0].id;
+            
+            // Get the latest scan time for this token
+            const scanRes = await fetch(
+                `${SUPABASE_URL}/token_scans?token_id=eq.${tokenData[0].id}&order=scanned_at.desc&limit=1`,
+                {
+                    headers: {
+                        "apikey": SUPABASE_KEY,
+                        "Authorization": `Bearer ${SUPABASE_KEY}`
+                    }
+                }
+            );
+            const scanData = await scanRes.json();
+            if (scanData && scanData.length > 0) {
+                lastScanTime = scanData[0].scanned_at;
+            }
         }
     } catch (error) {
         console.error("Error getting initial token:", error);
     }
 
-    // Poll every 2 seconds to check if the current token was used
+    // Poll every 1 second to check if the current token was scanned
     setInterval(async () => {
         try {
             // Get the current active token
-            const res = await fetch(
+            const tokenRes = await fetch(
                 `${SUPABASE_URL}/qr_tokens?is_active=eq.true&order=created_at.desc&limit=1`,
                 {
                     headers: {
@@ -524,35 +546,81 @@ async function startMonitoringForUsedTokens() {
                     }
                 }
             );
-            const data = await res.json();
-
-            // If no active token found, generate a new one
-            if (!data || data.length === 0) {
-                // Check if we should auto-generate (only if not stopped)
+            const tokenData = await tokenRes.json();
+            
+            // If no active token found (expired or deactivated), generate new one
+            if (!tokenData || tokenData.length === 0) {
+                // Check if we should auto-generate (only if not stopped by admin)
                 if (currentToken === null && countdownInterval === null) {
                     // QR was stopped by admin, don't auto-generate
                     return;
                 }
                 
-                // Token was used by employee, generate new one
+                // Token expired or was used, generate new one
                 const qrMsgSpan = qrMsg.querySelector("span");
-                qrMsgSpan.innerHTML = '<i class="bx bx-loader-alt bx-spin mr-1"></i>Employee scanned! Generating new QR...';
+                qrMsgSpan.innerHTML = '<i class="bx bx-loader-alt bx-spin mr-1"></i>Token expired! Generating new QR...';
                 generateQRCode();
-            } else {
-                // Check if the token has changed (was deactivated and new one created)
-                if (lastKnownTokenId && data[0].id !== lastKnownTokenId) {
-                    // New token was generated, update our reference
-                    lastKnownTokenId = data[0].id;
+                return;
+            }
+            
+            const currentTokenData = tokenData[0];
+            
+            // Check if the token has changed (new token was generated)
+            if (lastKnownTokenId && currentTokenData.id !== lastKnownTokenId) {
+                // New token was generated, update our reference
+                lastKnownTokenId = currentTokenData.id;
+                currentTokenId = currentTokenData.id;
+                lastScanTime = null;
+                loadQRCodes();
+                loadQRCodesWithStatus();
+                loadStats();
+                return;
+            }
+            
+            // Check if the current token has been scanned
+            const scanRes = await fetch(
+                `${SUPABASE_URL}/token_scans?token_id=eq.${currentTokenData.id}&order=scanned_at.desc&limit=1`,
+                {
+                    headers: {
+                        "apikey": SUPABASE_KEY,
+                        "Authorization": `Bearer ${SUPABASE_KEY}`
+                    }
+                }
+            );
+            const scanData = await scanRes.json();
+            
+            if (scanData && scanData.length > 0) {
+                const latestScanTime = scanData[0].scanned_at;
+                
+                // If we have a new scan that we haven't processed yet
+                if (lastScanTime !== latestScanTime) {
+                    // Token was scanned! Generate new QR code immediately
+                    const qrMsgSpan = qrMsg.querySelector("span");
+                    qrMsgSpan.innerHTML = '<i class="bx bx-loader-alt bx-spin mr-1"></i>Token scanned! Generating new QR...';
+                    
+                    // Update the last scan time
+                    lastScanTime = latestScanTime;
+                    
+                    // Deactivate the used token and generate new one
+                    await deactivateByToken(currentTokenData.token);
+                    
+                    // Small delay before generating new QR
+                    setTimeout(() => {
+                        generateQRCode();
+                    }, 500);
+                    
+                    // Refresh tables
                     loadQRCodes();
                     loadQRCodesWithStatus();
                     loadStats();
-                } else {
-                    // Token status might have changed (scanned), refresh the status table
-                    loadQRCodesWithStatus();
                 }
             }
+            
+            // Also refresh the status table to show updated scan info
+            loadQRCodesWithStatus();
+            
         } catch (error) {
             console.error("Error monitoring tokens:", error);
         }
-    }, 2000);
+    }, 1000);
 }

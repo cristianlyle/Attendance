@@ -16,193 +16,249 @@ require 'db.php';
     <script src="https://cdn.tailwindcss.com"></script>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .sidebar-link {
+            transition: all 0.2s ease;
+        }
+        
+        .sidebar-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-link.active {
+            background-color: rgba(255, 255, 255, 0.15);
+        }
+        
+        .stat-card {
+            transition: all 0.2s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary {
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: #15803D;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
 </head>
-<body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans">
+<body class="bg-[#F8FAFC] font-sans">
 
     <div class="flex min-h-screen">
         <!-- ================= SIDEBAR ================= -->
-        <aside class="w-64 bg-gradient-to-b from-green-700 to-green-800 text-white flex flex-col fixed min-h-screen shadow-xl">
+        <aside class="w-64 bg-[#14532D] text-white flex flex-col fixed min-h-screen shadow-lg">
             <div class="p-6">
                 <div class="flex items-center justify-center mb-6">
-                    <div class="bg-white/20 p-3 rounded-full">
-                        <i class='bx bxs-dashboard text-3xl'></i>
+                    <div class="bg-white/10 p-3 rounded-full">
+                        <i class='bx bxs-dashboard text-2xl'></i>
                     </div>
                 </div>
-                <h2 class="text-xl font-bold text-center">Admin Panel</h2>
-                <p class="text-green-200 text-sm text-center mt-1">Attendance System</p>
+                <h2 class="text-lg font-semibold text-center">Admin Panel</h2>
+                <p class="text-green-200 text-xs text-center mt-1">Attendance System</p>
             </div>
             <nav class="flex-1 px-4 pb-6">
-                <ul class="space-y-2">
+                <ul class="space-y-1">
                     <li>
-                        <a href="admin-dashboard.php" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/10 text-white">
+                        <a href="admin-dashboard.php" class="sidebar-link active flex items-center gap-3 px-4 py-2.5 rounded-lg text-white">
                             <i class='bx bxs-home text-lg'></i>
-                            <span>Dashboard</span>
+                            <span class="text-sm">Dashboard</span>
                         </a>
                     </li>
                     <li>
-                        <a href="manage-user-dashboard.php" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 text-green-100 hover:text-white transition-colors">
+                        <a href="manage-user-dashboard.php" class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-white/10 text-green-100 hover:text-white">
                             <i class='bx bxs-user-detail text-lg'></i>
-                            <span>Manage Users</span>
+                            <span class="text-sm">Manage Employees</span>
                         </a>
                     </li>
                     <li>
-                        <a href="attendance-dashboard.php" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 text-green-100 hover:text-white transition-colors">
+                        <a href="attendance-dashboard.php" class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-white/10 text-green-100 hover:text-white">
                             <i class='bx bx-calendar-check text-lg'></i>
-                            <span>Attendance</span>
+                            <span class="text-sm">Attendance</span>
                         </a>
                     </li>
                     <li>
-                        <a href="qr-token-dashboard.php" class="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/10 text-green-100 hover:text-white transition-colors">
+                        <a href="qr-token-dashboard.php" class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-white/10 text-green-100 hover:text-white">
                             <i class='bx bx-qr text-lg'></i>
-                            <span>QR Tokens</span>
+                            <span class="text-sm">QR Tokens</span>
                         </a>
                     </li>
                 </ul>
             </nav>
             <div class="px-4 pb-6">
-                <a href="logout.php" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-500/80 hover:bg-red-500 text-white transition-colors">
+                <a href="logout.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-red-500/80 hover:bg-red-500 text-white transition-colors">
                     <i class='bx bxs-log-out text-lg'></i>
-                    <span>Logout</span>
+                    <span class="text-sm">Logout</span>
                 </a>
             </div>
         </aside>
 
         <!-- ================= MAIN CONTENT ================= -->
-        <main class="flex-1 ml-64 p-6">
+        <main class="flex-1 ml-64 p-6 lg:p-8">
             <!-- Header -->
-            <div class="flex items-center justify-between mb-8">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-800">
-                        <i class='bx bxs-dashboard mr-3 text-green-600'></i>Admin Dashboard
+                    <h1 class="text-2xl font-bold text-[#0F172A] flex items-center gap-3">
+                        Admin Dashboard
                     </h1>
-                    <p class="text-gray-600 mt-1 flex items-center gap-3">
+                    <div class="flex items-center gap-3 mt-2">
                         <?php
                         $profileImage = get_profile_image($_SESSION['user']['profile_image'] ?? null);
                         ?>
-                        <span>Welcome, <?= htmlspecialchars($_SESSION['user']['name']) ?></span>
-                        <span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">Admin</span>
-                    </p>
+                        <span class="text-[#475569] text-sm">Welcome, <?= htmlspecialchars($_SESSION['user']['name']) ?></span>
+                        <span class="px-2.5 py-1 bg-[#DCFCE7] text-[#166534] text-xs font-medium rounded-full">Admin</span>
+                    </div>
                 </div>
                 <div class="flex items-center gap-3">
-                    <div class="bg-white rounded-xl px-4 py-2 shadow-sm flex items-center gap-2">
-                        <i class='bx bx-time-five text-gray-400'></i>
-                        <span id="currentTime" class="text-gray-600 font-medium"></span>
+                    <div class="bg-white rounded-lg px-4 py-2 shadow-sm border border-gray-100 flex items-center gap-2">
+                        <i class='bx bx-time-five text-[#94A3B8]'></i>
+                        <span id="currentTime" class="text-[#475569] text-sm font-medium">--:--:--</span>
                     </div>
                 </div>
             </div>
 
             <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Total Users Card -->
+                <div class="stat-card bg-white rounded-2xl shadow-lg p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-500 text-sm font-medium">Total Users</p>
-                            <p class="text-3xl font-bold text-gray-800 mt-1" id="totalUsers">--</p>
+                            <p class="text-[#94A3B8] text-sm font-medium uppercase tracking-wide">Total Users</p>
+                            <p class="text-3xl font-bold text-[#0F172A] mt-1" id="totalUsers">--</p>
                         </div>
-                        <div class="bg-blue-100 p-3 rounded-xl">
-                            <i class='bx bxs-user text-2xl text-blue-600'></i>
+                        <div class="bg-blue-100 p-3 rounded-xl flex items-center justify-center">
+                            <i class='bx bxs-user text-2xl text-[#3B82F6]'></i>
                         </div>
                     </div>
                 </div>
-                <div class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+                
+                <!-- Today's Attendance Card -->
+                <div class="stat-card bg-white rounded-2xl shadow-lg p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-500 text-sm font-medium">Today's Attendance</p>
-                            <p class="text-3xl font-bold text-gray-800 mt-1" id="todayAttendance">--</p>
+                            <p class="text-[#94A3B8] text-sm font-medium uppercase tracking-wide">Today's Attendance</p>
+                            <p class="text-3xl font-bold text-[#0F172A] mt-1" id="todayAttendance">--</p>
                         </div>
-                        <div class="bg-green-100 p-3 rounded-xl">
-                            <i class='bx bx-calendar-check text-2xl text-green-600'></i>
+                        <div class="bg-green-100 p-3 rounded-xl flex items-center justify-center">
+                            <i class='bx bx-calendar-check text-2xl text-[#22C55E]'></i>
                         </div>
                     </div>
                 </div>
-                <div class="bg-white rounded-2xl shadow-lg p-6 hover:shadow-xl transition-shadow">
+                
+                <!-- Tokens Card -->
+                <div class="stat-card bg-white rounded-2xl shadow-lg p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-500 text-sm font-medium">Tokens</p>
-                            <p class="text-3xl font-bold text-gray-800 mt-1" id="totalCount">--</p>
+                            <p class="text-[#94A3B8] text-sm font-medium uppercase tracking-wide">Total Tokens</p>
+                            <p class="text-3xl font-bold text-[#0F172A] mt-1" id="totalCount">--</p>
                         </div>
-                        <div class="bg-purple-100 p-3 rounded-xl">
-                            <i class='bx bx-qr text-2xl text-purple-600'></i>
+                        <div class="bg-purple-100 p-3 rounded-xl flex items-center justify-center">
+                            <i class='bx bx-qr text-2xl text-[#A855F7]'></i>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- ================= QR GENERATOR ================= -->
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="p-2 rounded-xl">
-                        <i class='bx bxs-qr-code text-xl text-green-600'></i>
+            <div class="bg-white mt-5 rounded-xl shadow-sm border border-gray-100 p-6">
+                <div class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center">
+                            <i class='bx bx-qr-scan text-4xl mr-1 text-[#166534]'></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-[#0F172A]">Generate QR Code for Attendance</h3>
                     </div>
-                    <h2 class="text-xl font-bold text-gray-800">Generate QR Code for Attendance</h2>
-                </div>
-
                 <div class="flex flex-col lg:flex-row lg:items-end gap-4 mb-6">
-                    <div class="flex-1">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">
-                            <i class='bx bxs-map-pin mr-1 text-green-500'></i>Location
+                    <div class="flex-1 w-full">
+                        <label class="block text-sm font-medium text-[#475569] mb-2">
+                            <i class='bx bxs-map-pin mr-1 text-[#22C55E]'></i>Location
                         </label>
                         <select id="qrLocation" name="location"
-                            class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white">
+                            class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#166534] focus:border-transparent bg-white text-[#0F172A] text-sm">
                             <option value="Warehouse">Warehouse</option>
                             <option value="Main Building">Main Building</option>
                             <option value="Remote">Remote</option>
                         </select>
                     </div>
                     <button onclick="generateQRCode()"
-                        class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all">
+                        class="btn-primary flex items-center gap-2 px-5 py-2.5 bg-[#166534] hover:bg-[#15803D] text-white rounded-lg font-medium shadow-sm text-sm">
                         <i class='bx bx-qr'></i>
                         Generate QR Code
                     </button>
                     <button onclick="stopQRCode()"
-                        class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all">
+                        class="flex items-center gap-2 px-5 py-2.5 bg-[#EF4444] hover:bg-[#DC2626] text-white rounded-lg font-medium shadow-sm text-sm transition-colors">
                         <i class='bx bx-stop'></i>
                         Stop QR
                     </button>
                 </div>
 
-                <div class="flex flex-col lg:flex-row gap-6 items-center">
-                    <div class="bg-gray-50 rounded-xl p-6 flex items-center justify-center">
-                        <canvas id="qrCodeCanvas" class="border-2 border-gray-200 rounded-lg"></canvas>
+                <div class="flex flex-col lg:flex-row gap-6 items-start">
+                    <div class="bg-[#F8FAFC] rounded-lg p-6 flex items-center justify-center border border-gray-100">
+                        <canvas id="qrCodeCanvas" class="border border-gray-200 rounded-lg"></canvas>
                     </div>
-                    <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 flex-1 w-full">
-                        <h3 class="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                            <i class='bx bx-info-circle text-green-500'></i>Token Details
+                    <div class="bg-[#F8FAFC] rounded-lg p-5 flex-1 w-full border border-gray-100">
+                        <h3 class="font-semibold text-[#0F172A] mb-4 flex items-center gap-2 text-sm">
+                            <i class='bx bx-info-circle text-[#22C55E]'></i>Token Details
                         </h3>
                         <div class="space-y-3">
-                            <div class="flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm">
-                                <i class='bx bxs-key text-green-500 text-lg'></i>
+                            <div class="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-100">
+                                <i class='bx bxs-key text-[#22C55E] text-lg'></i>
                                 <div class="flex-1">
-                                    <p class="text-xs text-gray-500">Token</p>
-                                    <p id="qrToken" class="font-mono font-medium text-gray-800 break-all">--</p>
+                                    <p class="text-xs text-[#94A3B8]">Token</p>
+                                    <p id="qrToken" class="font-mono text-xs text-[#0F172A] break-all">--</p>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm">
-                                <i class='bx bx-time text-blue-500 text-lg'></i>
+                            <div class="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-100">
+                                <i class='bx bx-time text-[#3B82F6] text-lg'></i>
                                 <div class="flex-1">
-                                    <p class="text-xs text-gray-500">Created At</p>
-                                    <p id="qrCreated" class="font-medium text-gray-800">--</p>
+                                    <p class="text-xs text-[#94A3B8]">Created At</p>
+                                    <p id="qrCreated" class="text-sm text-[#0F172A]">--</p>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm">
-                                <i class='bx bx-timer text-orange-500 text-lg'></i>
+                            <div class="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-100">
+                                <i class='bx bx-timer text-[#F59E0B] text-lg'></i>
                                 <div class="flex-1">
-                                    <p class="text-xs text-gray-500">Expires In</p>
-                                    <p id="qrExpires" class="font-medium text-gray-800">--</p>
+                                    <p class="text-xs text-[#94A3B8]">Expires In</p>
+                                    <p id="qrExpires" class="text-sm text-[#0F172A]">--</p>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-3 p-3 bg-white rounded-lg shadow-sm">
-                                <i class='bx bxs-map-pin text-purple-500 text-lg'></i>
+                            <div class="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-100">
+                                <i class='bx bxs-map-pin text-[#A855F7] text-lg'></i>
                                 <div class="flex-1">
-                                    <p class="text-xs text-gray-500">Location</p>
-                                    <p id="qrLocationText" class="font-medium text-gray-800">--</p>
+                                    <p class="text-xs text-[#94A3B8]">Location</p>
+                                    <p id="qrLocationText" class="text-sm text-[#0F172A]">--</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <p id="qrMsg" class="mt-4 font-semibold text-red-500 flex items-center gap-2">
-                   
+                <p id="qrMsg" class="mt-4 font-medium text-[#EF4444] flex items-center gap-2 text-sm">
                     <span></span>
                 </p>
             </div>

@@ -86,6 +86,7 @@ function editUser() {
     document.getElementById("editName").value = userName;
     document.getElementById("editEmail").value = userEmail;
     document.getElementById("editRole").value = userRole;
+    document.getElementById("editRoleValue").value = userRole;
     document.getElementById("editStatus").value = userStatus;
     document.getElementById("editNameLabel").textContent = userName;
     
@@ -257,14 +258,14 @@ document.addEventListener("DOMContentLoaded", function() {
             // Status badge
             const statusBadge = document.getElementById("viewStatus");
             if (userStatus === 'active') {
-                statusBadge.innerHTML = '<i class="bx bxs-check-circle mr-1"></i> Active';
+                statusBadge.innerHTML = ' Active';
                 statusBadge.className = "inline-flex items-center gap-1 px-3 py-1 mt-2 rounded-full text-sm font-medium bg-green-100 text-green-700";
             } else {
-                statusBadge.innerHTML = '<i class="bx bxs-x-circle mr-1"></i> Inactive';
+                statusBadge.innerHTML = 'Inactive';
                 statusBadge.className = "inline-flex items-center gap-1 px-3 py-1 mt-2 rounded-full text-sm font-medium bg-red-100 text-red-700";
             }
             
-            document.getElementById("viewRoleDetail").textContent = userRole === 'admin' ? 'Admin' : 'Employee';
+            document.getElementById("viewRoleDetail").textContent = userRole === 'Employee';
             document.getElementById("viewCreated").textContent = new Date(userCreated).toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
