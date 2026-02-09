@@ -489,7 +489,7 @@ async function startMonitoringForScannedTokens() {
         } catch (error) {
             console.error("Error monitoring tokens:", error);
         }
-    }, 1000);
+    }, 30000);
 }
 
 /* ================= INITIAL LOAD ================= */
