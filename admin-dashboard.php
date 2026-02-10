@@ -24,15 +24,32 @@ require 'db.php';
         }
         
         .sidebar-link {
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
         
         .sidebar-link:hover {
             background-color: rgba(255, 255, 255, 0.1);
         }
         
+        .sidebar-link:hover .nav-icon {
+            transform: translateY(-4px) scale(1.1);
+            text-shadow: 0 4px 8px rgba(255, 255, 255, 0.3);
+        }
+        
         .sidebar-link.active {
-            background-color: rgba(255, 255, 255, 0.15);
+            background-color: transparent;
+        }
+        
+        .sidebar-link.active .nav-icon {
+            transform: translateY(-6px) scale(1.15);
+            text-shadow: 0 6px 12px rgba(255, 255, 255, 0.4);
+        }
+        
+        .nav-icon {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: inline-flex;
         }
         
         .stat-card {
@@ -88,33 +105,40 @@ require 'db.php';
                 <ul class="space-y-1">
                     <li>
                         <a href="admin-dashboard.php" class="sidebar-link active flex items-center gap-3 px-4 py-2.5 rounded-lg text-white">
-                            <i class='bx bxs-home text-lg'></i>
+                            <i class='bx bxs-home text-lg nav-icon'></i>
                             <span class="text-sm">Dashboard</span>
                         </a>
                     </li>
                     <li>
                         <a href="manage-user-dashboard.php" class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-white/10 text-green-100 hover:text-white">
-                            <i class='bx bxs-user-detail text-lg'></i>
+                            <i class='bx bxs-user-detail text-lg nav-icon'></i>
                             <span class="text-sm">Manage Employees</span>
                         </a>
                     </li>
                     <li>
                         <a href="attendance-dashboard.php" class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-white/10 text-green-100 hover:text-white">
-                            <i class='bx bx-calendar-check text-lg'></i>
+                            <i class='bx bx-calendar-check text-lg nav-icon'></i>
                             <span class="text-sm">Attendance</span>
                         </a>
                     </li>
                     <li>
                         <a href="qr-token-dashboard.php" class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-white/10 text-green-100 hover:text-white">
-                            <i class='bx bx-qr text-lg'></i>
+                            <i class='bx bx-qr text-lg nav-icon'></i>
                             <span class="text-sm">QR Tokens</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="leave-management-dashboard.php" class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-white/10 text-green-100 hover:text-white">
+                            <i class='bx bx-calendar-minus text-lg nav-icon'></i>
+                            <span class="text-sm">Leave Management</span>
+                            <span id="leaveNotificationBadge" class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full" style="display: none;">0</span>
                         </a>
                     </li>
                 </ul>
             </nav>
             <div class="px-4 pb-6">
-                <a href="logout.php" class="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-red-500/80 hover:bg-red-500 text-white transition-colors">
-                    <i class='bx bxs-log-out text-lg'></i>
+                <a href="logout.php" class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-white/10 text-green-100 hover:text-white transition-colors">
+                    <i class='bx bxs-log-out text-lg nav-icon'></i>
                     <span class="text-sm">Logout</span>
                 </a>
             </div>

@@ -23,7 +23,8 @@ if (isset($_POST['login'])) {
                     'name' => $user['name'],
                     'email' => $user['email'],
                     'role' => $user['role'],
-                    'id' => $user['id']
+                    'id' => $user['id'],
+                    'profile_image' => $user['profile_image'] ?? null
                 ];
 
                 // Redirect based on role

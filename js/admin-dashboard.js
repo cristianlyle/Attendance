@@ -624,3 +624,37 @@ async function startMonitoringForUsedTokens() {
         }
     }, 1000);
 }
+
+/* ================= LEAVE REQUEST NOTIFICATIONS ================= */
+async function checkLeaveNotifications() {
+    try {
+        const formData = new FormData();
+        formData.append('action', 'get_all_requests');
+        
+        const response = await fetch('leave-request-handler.php', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success && Array.isArray(data.data)) {
+            const pendingCount = data.data.filter(r => r.status === 'pending').length;
+            const badge = document.getElementById('leaveNotificationBadge');
+            
+            if (badge && pendingCount > 0) {
+                badge.textContent = pendingCount;
+                badge.style.display = 'inline-flex';
+            } else if (badge) {
+                badge.style.display = 'none';
+            }
+        }
+    } catch (error) {
+        console.error('Error checking leave notifications:', error);
+    }
+}
+
+// Check for leave notifications every 30 seconds
+setInterval(checkLeaveNotifications, 30000);
+checkLeaveNotifications();
+
